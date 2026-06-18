@@ -1032,9 +1032,10 @@ function renderSlide13(mKeys,mLabels){
 }
 
 /* SLIDE 14 — Por Fornecedor (nome na barra) */
-/* SLIDE 14 — Ajudantes por Fornecedor × Mês (barras empilhadas) */
+/* SLIDE 14 — Ajudantes por Fornecedor (X=fornecedor, grupo por mês, maior→menor) */
 function renderSlide14(mKeys,mLabels){
   document.getElementById('h14-periodo').textContent=mLabels.join(' → ');
+  // Build suppByMonth and totals
   const suppByMonth={};const allSupps=new Set();
   mKeys.forEach(k=>{
     suppByMonth[k]={};
@@ -1044,16 +1045,17 @@ function renderSlide14(mKeys,mLabels){
       allSupps.add(s);
     });
   });
-  // Sort suppliers by total desc
   const suppTotals={};
   allSupps.forEach(s=>{suppTotals[s]=mKeys.reduce((t,k)=>t+(suppByMonth[k][s]||0),0);});
+  // X axis = suppliers sorted by total desc
   const supps=[...allSupps].sort((a,b)=>suppTotals[b]-suppTotals[a]);
-  const datasets=supps.map((s,i)=>({
-    label:s,
-    data:mKeys.map(k=>suppByMonth[k][s]||0),
+  // One dataset per month
+  const datasets=mKeys.map((k,i)=>({
+    label:mLabels[i],
+    data:supps.map(s=>suppByMonth[k][s]||0),
     backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'cc',
     borderColor:CHART_COLORS[i%CHART_COLORS.length],
-    borderWidth:1,borderRadius:3
+    borderWidth:1,borderRadius:4
   }));
   const L=mKeys.length-1;
   const tot=mKeys.reduce((t,k)=>t+getMaoRecsForKey(k).length,0);
@@ -1062,22 +1064,22 @@ function renderSlide14(mKeys,mLabels){
     {label:'Fornecedores',val:supps.length},
     {label:'Últ. mês',val:getMaoRecsForKey(mKeys[L]).length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length}
   ]);
-  mkChart('chart14','bar',mLabels,datasets,{
+  mkChart('chart14','bar',supps,datasets,{
     scales:{
-      x:{stacked:true,ticks:{color:'#333',font:{size:11,weight:'600'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
-      y:{stacked:true,ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'}}
+      x:{ticks:{color:'#333',font:{size:11,weight:'700'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
+      y:{ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'},beginAtZero:true}
     },
     datalabels:{
-      color:'#fff',font:{weight:'bold',size:11},
+      color:'#fff',font:{weight:'bold',size:12},
       anchor:'center',align:'center',
-      textStrokeColor:'rgba(0,0,0,0.35)',textStrokeWidth:2,
+      textStrokeColor:'rgba(0,0,0,0.6)',textStrokeWidth:3,
       display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0,
-      formatter:(v,ctx)=>v>0?ctx.dataset.label+'\n'+v:''
+      formatter:(v)=>v>0?v:''
     }
   });
 }
 
-/* SLIDE 15 — Ajudantes por Operação × Mês (barras empilhadas) */
+/* SLIDE 15 — Ajudantes por Operação (X=operação, grupo por mês, maior→menor) */
 function renderSlide15(mKeys,mLabels){
   document.getElementById('h15-periodo').textContent=mLabels.join(' → ');
   const opByMonth={};const allOps=new Set();
@@ -1091,13 +1093,15 @@ function renderSlide15(mKeys,mLabels){
   });
   const opTotals={};
   allOps.forEach(o=>{opTotals[o]=mKeys.reduce((t,k)=>t+(opByMonth[k][o]||0),0);});
+  // X axis = operations sorted by total desc
   const ops=[...allOps].sort((a,b)=>opTotals[b]-opTotals[a]);
-  const datasets=ops.map((o,i)=>({
-    label:o,
-    data:mKeys.map(k=>opByMonth[k][o]||0),
+  // One dataset per month
+  const datasets=mKeys.map((k,i)=>({
+    label:mLabels[i],
+    data:ops.map(o=>opByMonth[k][o]||0),
     backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'cc',
     borderColor:CHART_COLORS[i%CHART_COLORS.length],
-    borderWidth:1,borderRadius:3
+    borderWidth:1,borderRadius:4
   }));
   const L=mKeys.length-1;
   const tot=mKeys.reduce((t,k)=>t+getMaoRecsForKey(k).length,0);
@@ -1106,17 +1110,17 @@ function renderSlide15(mKeys,mLabels){
     {label:'Operações',val:ops.length},
     {label:'Últ. mês',val:getMaoRecsForKey(mKeys[L]).length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length}
   ]);
-  mkChart('chart15','bar',mLabels,datasets,{
+  mkChart('chart15','bar',ops,datasets,{
     scales:{
-      x:{stacked:true,ticks:{color:'#333',font:{size:11,weight:'600'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
-      y:{stacked:true,ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'}}
+      x:{ticks:{color:'#333',font:{size:11,weight:'700'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
+      y:{ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'},beginAtZero:true}
     },
     datalabels:{
-      color:'#fff',font:{weight:'bold',size:11},
+      color:'#fff',font:{weight:'bold',size:12},
       anchor:'center',align:'center',
-      textStrokeColor:'rgba(0,0,0,0.35)',textStrokeWidth:2,
+      textStrokeColor:'rgba(0,0,0,0.6)',textStrokeWidth:3,
       display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0,
-      formatter:(v,ctx)=>v>0?ctx.dataset.label+'\n'+v:''
+      formatter:(v)=>v>0?v:''
     }
   });
 }
