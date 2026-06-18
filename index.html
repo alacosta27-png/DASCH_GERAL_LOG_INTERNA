@@ -1026,68 +1026,85 @@ function renderSlide13(mKeys,mLabels){
 }
 
 /* SLIDE 14 — Por Fornecedor (nome na barra) */
+/* SLIDE 14 — Uma barra por FORNECEDOR (último mês do período selecionado) */
 function renderSlide14(mKeys,mLabels){
   document.getElementById('h14-periodo').textContent=mLabels.join(' → ');
-  const suppByMonth={};const allSupps=new Set();
+  // Aggregate across ALL months in period → one bar per supplier
+  const suppTotals={};
   mKeys.forEach(k=>{
-    suppByMonth[k]={};
     getMaoRecsForKey(k).forEach(r=>{
-      const s=r.supplier||'N/D';suppByMonth[k][s]=(suppByMonth[k][s]||0)+1;allSupps.add(s);
+      const s=r.supplier||'N/D';
+      suppTotals[s]=(suppTotals[s]||0)+1;
     });
   });
-  const supps=[...allSupps].sort();
-  // Single stacked bar per month — each supplier is a segment with its name shown
-  const datasets=supps.map((s,i)=>({
-    label:s,data:mKeys.map(k=>suppByMonth[k][s]||0),
-    backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'bb',
-    borderColor:CHART_COLORS[i%CHART_COLORS.length],borderWidth:1
-  }));
+  const supps=Object.keys(suppTotals).sort((a,b)=>suppTotals[b]-suppTotals[a]); // desc
+  const vals=supps.map(s=>suppTotals[s]);
   const L=mKeys.length-1;
   const lastRecs=getMaoRecsForKey(mKeys[L]);
-  mkKpi('kpi14',[{label:'Total ajudantes (últ. mês)',val:lastRecs.length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length},{label:'Fornecedores ativos',val:new Set(lastRecs.map(r=>r.supplier)).size}]);
-  mkChart('chart14','bar',mLabels,datasets,{
+  mkKpi('kpi14',[
+    {label:'Total ajudantes (período)',val:vals.reduce((s,v)=>s+v,0)},
+    {label:'Fornecedores ativos',val:supps.length}
+  ]);
+  mkChart('chart14','bar',supps,[{
+    label:'Ajudantes',
+    data:vals,
+    backgroundColor:supps.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]+'cc'),
+    borderColor:supps.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]),
+    borderWidth:2,
+    borderRadius:4
+  }],{
     scales:{
-      x:{stacked:true,ticks:{color:'#333',font:{size:11,weight:'600'},maxRotation:45,minRotation:45},grid:{color:'#e8e8e8'}},
-      y:{stacked:true,ticks:{color:'#444',font:{size:11}},grid:{color:'#e0e0e0'}}
+      x:{ticks:{color:'#333',font:{size:12,weight:'700'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
+      y:{ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'}}
     },
+    opts:{plugins:{legend:{display:false}}},
     datalabels:{
-      formatter:(v,ctx)=>{if(!v||v<1) return '';return ctx.dataset.label+'\n'+v;},
-      color:'#fff',font:{weight:'bold',size:11},anchor:'center',align:'center',
-      textStrokeColor:'rgba(0,0,0,0.4)',textStrokeWidth:2,
-      display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0
+      color:'#fff',
+      font:{weight:'bold',size:13},
+      anchor:'center',align:'center',
+      textStrokeColor:'rgba(0,0,0,0.35)',textStrokeWidth:3,
+      formatter:(v)=>v>0?v.toLocaleString('pt-BR'):''
     }
   });
 }
 
-/* SLIDE 15 — Por Operação (nome na barra) */
+/* SLIDE 15 — Uma barra por OPERAÇÃO */
 function renderSlide15(mKeys,mLabels){
   document.getElementById('h15-periodo').textContent=mLabels.join(' → ');
-  const opByMonth={};const allOps=new Set();
+  const opTotals={};
   mKeys.forEach(k=>{
-    opByMonth[k]={};
     getMaoRecsForKey(k).forEach(r=>{
-      const o=r.op||'N/D';opByMonth[k][o]=(opByMonth[k][o]||0)+1;allOps.add(o);
+      const o=r.op||'N/D';
+      opTotals[o]=(opTotals[o]||0)+1;
     });
   });
-  const ops=[...allOps].sort();
-  const datasets=ops.map((o,i)=>({
-    label:o,data:mKeys.map(k=>opByMonth[k][o]||0),
-    backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'bb',
-    borderColor:CHART_COLORS[i%CHART_COLORS.length],borderWidth:1
-  }));
+  const ops=Object.keys(opTotals).sort((a,b)=>opTotals[b]-opTotals[a]);
+  const vals=ops.map(o=>opTotals[o]);
   const L=mKeys.length-1;
   const lastRecs=getMaoRecsForKey(mKeys[L]);
-  mkKpi('kpi15',[{label:'Total (últ. mês)',val:lastRecs.length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length},{label:'Operações ativas',val:new Set(lastRecs.map(r=>r.op)).size}]);
-  mkChart('chart15','bar',mLabels,datasets,{
+  mkKpi('kpi15',[
+    {label:'Total ajudantes (período)',val:vals.reduce((s,v)=>s+v,0)},
+    {label:'Operações ativas',val:ops.length}
+  ]);
+  mkChart('chart15','bar',ops,[{
+    label:'Ajudantes',
+    data:vals,
+    backgroundColor:ops.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]+'cc'),
+    borderColor:ops.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]),
+    borderWidth:2,
+    borderRadius:4
+  }],{
     scales:{
-      x:{stacked:true,ticks:{color:'#333',font:{size:11,weight:'600'},maxRotation:45,minRotation:45},grid:{color:'#e8e8e8'}},
-      y:{stacked:true,ticks:{color:'#444',font:{size:11}},grid:{color:'#e0e0e0'}}
+      x:{ticks:{color:'#333',font:{size:12,weight:'700'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
+      y:{ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'}}
     },
+    opts:{plugins:{legend:{display:false}}},
     datalabels:{
-      formatter:(v,ctx)=>{if(!v||v<1) return '';return ctx.dataset.label+'\n'+v;},
-      color:'#fff',font:{weight:'bold',size:11},anchor:'center',align:'center',
-      textStrokeColor:'rgba(0,0,0,0.4)',textStrokeWidth:2,
-      display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0
+      color:'#fff',
+      font:{weight:'bold',size:13},
+      anchor:'center',align:'center',
+      textStrokeColor:'rgba(0,0,0,0.35)',textStrokeWidth:3,
+      formatter:(v)=>v>0?v.toLocaleString('pt-BR'):''
     }
   });
 }
