@@ -1032,97 +1032,97 @@ function renderSlide13(mKeys,mLabels){
 }
 
 /* SLIDE 14 — Por Fornecedor (nome na barra) */
-/* SLIDE 14 — Ajudantes por Fornecedor (X=fornecedor, grupo por mês, maior→menor) */
-function renderSlide14(mKeys,mLabels){
-  document.getElementById('h14-periodo').textContent=mLabels.join(' → ');
-  // Build suppByMonth and totals
-  const suppByMonth={};const allSupps=new Set();
+/* Helpers para gráficos 14/15 — X=mês, labels acima da barra em 45° */
+function _mkSlide1415(slideNum,mKeys,mLabels,getCat,kpiLabel){
+  document.getElementById('h'+slideNum+'-periodo').textContent=mLabels.join(' → ');
+  // catByMonth[month][cat] = count
+  const catByMonth={};const allCats=new Set();
   mKeys.forEach(k=>{
-    suppByMonth[k]={};
+    catByMonth[k]={};
     getMaoRecsForKey(k).forEach(r=>{
-      const s=r.supplier||'N/D';
-      suppByMonth[k][s]=(suppByMonth[k][s]||0)+1;
-      allSupps.add(s);
+      const cat=getCat(r)||'N/D';
+      catByMonth[k][cat]=(catByMonth[k][cat]||0)+1;
+      allCats.add(cat);
     });
   });
-  const suppTotals={};
-  allSupps.forEach(s=>{suppTotals[s]=mKeys.reduce((t,k)=>t+(suppByMonth[k][s]||0),0);});
-  // X axis = suppliers sorted by total desc
-  const supps=[...allSupps].sort((a,b)=>suppTotals[b]-suppTotals[a]);
-  // One dataset per month
-  const datasets=mKeys.map((k,i)=>({
-    label:mLabels[i],
-    data:supps.map(s=>suppByMonth[k][s]||0),
+  const catTotals={};
+  allCats.forEach(cat=>{catTotals[cat]=mKeys.reduce((t,k)=>t+(catByMonth[k][cat]||0),0);});
+  // One dataset per CATEGORY (sorted by total desc), X axis = months
+  const cats=[...allCats].sort((a,b)=>catTotals[b]-catTotals[a]);
+  const datasets=cats.map((cat,i)=>({
+    label:cat,
+    data:mKeys.map(k=>catByMonth[k][cat]||0),
     backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'cc',
     borderColor:CHART_COLORS[i%CHART_COLORS.length],
     borderWidth:1,borderRadius:4
   }));
   const L=mKeys.length-1;
   const tot=mKeys.reduce((t,k)=>t+getMaoRecsForKey(k).length,0);
-  mkKpi('kpi14',[
+  mkKpi('kpi'+slideNum,[
     {label:'Total período',val:tot},
-    {label:'Fornecedores',val:supps.length},
+    {label:kpiLabel,val:cats.length},
     {label:'Últ. mês',val:getMaoRecsForKey(mKeys[L]).length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length}
   ]);
-  mkChart('chart14','bar',supps,datasets,{
-    scales:{
-      x:{ticks:{color:'#333',font:{size:11,weight:'700'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
-      y:{ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'},beginAtZero:true}
-    },
-    datalabels:{
-      color:'#fff',font:{weight:'bold',size:12},
-      anchor:'center',align:'center',
-      textStrokeColor:'rgba(0,0,0,0.6)',textStrokeWidth:3,
-      display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0,
-      formatter:(v)=>v>0?v:''
+  // Build chart manually to support dual datalabels (value inside + name above 45°)
+  const elId='chart'+slideNum;
+  const el=document.getElementById(elId);
+  if(!el) return;
+  if(charts[elId]){charts[elId].destroy();delete charts[elId];}
+  charts[elId]=new Chart(el.getContext('2d'),{
+    type:'bar',
+    data:{labels:mLabels,datasets},
+    plugins:[ChartDataLabels],
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      indexAxis:'x',
+      layout:{padding:{top:44}},
+      plugins:{
+        legend:{display:true,position:'top',
+          labels:{color:'#333',padding:12,font:{size:11,weight:'bold'},boxWidth:12}},
+        datalabels:{
+          // Value inside bar (white bold)
+          labels:{
+            value:{
+              anchor:'center',align:'center',
+              color:'#fff',font:{weight:'bold',size:11},
+              textStrokeColor:'rgba(0,0,0,0.6)',textStrokeWidth:3,
+              display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0,
+              formatter:(v)=>v>0?String(v):''
+            },
+            name:{
+              anchor:'end',align:'end',
+              rotation:-45,
+              color:'#222',font:{size:9,weight:'600'},
+              padding:{bottom:2},
+              display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0,
+              formatter:(v,ctx)=>ctx.dataset.label
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          ticks:{color:'#333',font:{size:11,weight:'700'},maxRotation:45,minRotation:45},
+          grid:{color:'#f0f0f0'}
+        },
+        y:{
+          beginAtZero:true,
+          ticks:{color:'#555',font:{size:11}},
+          grid:{color:'#eeeeee'}
+        }
+      }
     }
   });
 }
 
-/* SLIDE 15 — Ajudantes por Operação (X=operação, grupo por mês, maior→menor) */
+/* SLIDE 14 — Ajudantes por Fornecedor × Mês */
+function renderSlide14(mKeys,mLabels){
+  _mkSlide1415(14,mKeys,mLabels,r=>r.supplier,'Fornecedores');
+}
+
+/* SLIDE 15 — Ajudantes por Operação × Mês */
 function renderSlide15(mKeys,mLabels){
-  document.getElementById('h15-periodo').textContent=mLabels.join(' → ');
-  const opByMonth={};const allOps=new Set();
-  mKeys.forEach(k=>{
-    opByMonth[k]={};
-    getMaoRecsForKey(k).forEach(r=>{
-      const o=r.op||'N/D';
-      opByMonth[k][o]=(opByMonth[k][o]||0)+1;
-      allOps.add(o);
-    });
-  });
-  const opTotals={};
-  allOps.forEach(o=>{opTotals[o]=mKeys.reduce((t,k)=>t+(opByMonth[k][o]||0),0);});
-  // X axis = operations sorted by total desc
-  const ops=[...allOps].sort((a,b)=>opTotals[b]-opTotals[a]);
-  // One dataset per month
-  const datasets=mKeys.map((k,i)=>({
-    label:mLabels[i],
-    data:ops.map(o=>opByMonth[k][o]||0),
-    backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'cc',
-    borderColor:CHART_COLORS[i%CHART_COLORS.length],
-    borderWidth:1,borderRadius:4
-  }));
-  const L=mKeys.length-1;
-  const tot=mKeys.reduce((t,k)=>t+getMaoRecsForKey(k).length,0);
-  mkKpi('kpi15',[
-    {label:'Total período',val:tot},
-    {label:'Operações',val:ops.length},
-    {label:'Últ. mês',val:getMaoRecsForKey(mKeys[L]).length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length}
-  ]);
-  mkChart('chart15','bar',ops,datasets,{
-    scales:{
-      x:{ticks:{color:'#333',font:{size:11,weight:'700'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
-      y:{ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'},beginAtZero:true}
-    },
-    datalabels:{
-      color:'#fff',font:{weight:'bold',size:12},
-      anchor:'center',align:'center',
-      textStrokeColor:'rgba(0,0,0,0.6)',textStrokeWidth:3,
-      display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0,
-      formatter:(v)=>v>0?v:''
-    }
-  });
+  _mkSlide1415(15,mKeys,mLabels,r=>r.op,'Operações');
 }
 
 function renderSlide16(mKeys){
