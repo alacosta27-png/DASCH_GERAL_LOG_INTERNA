@@ -186,12 +186,12 @@ canvas{width:100%!important}
     <div class="slide-title">RESUMO — ÚLTIMO MÊS / COMPARATIVO PROJETADOS VS PRESENÇA</div>
     <div class="avail-row" id="avail-row3"></div>
     <div id="ger-ativos3" style="display:flex;gap:16px;justify-content:center;flex-shrink:0;margin-bottom:4px"></div>
-    <div class="chart-wrap" style="flex:1.4;min-height:160px"><canvas id="chart3"></canvas></div>
+    <div class="chart-wrap" style="flex:2;min-height:200px"><canvas id="chart3"></canvas></div>
     <div style="display:flex;gap:10px;flex-shrink:0">
       <div class="legend-wrap" id="legend3" style="flex:1"></div>
       <div class="period-stats" id="period-stats3" style="flex:none;grid-template-columns:repeat(4,auto)"></div>
     </div>
-    <div class="abs-grid" id="abs-grid3" style="flex:1.2"></div>
+    <div class="abs-grid" id="abs-grid3" style="flex:0;min-height:0;overflow:hidden"></div>
   </div>
 </div>
 <!-- SLIDE 4 -->
@@ -809,7 +809,13 @@ function renderSlide3(){
     });
     gridHtml+='</tbody></table></div>';
   }
-  document.getElementById('abs-grid3').innerHTML=gridHtml||'';
+  const g3=document.getElementById('abs-grid3');
+  g3.innerHTML=gridHtml||'';
+  // If grid has content, give it space; otherwise keep collapsed
+  g3.style.flex=gridHtml?'1.2':'0';
+  g3.style.minHeight=gridHtml?'120px':'0';
+  // Resize chart3 to fill available space
+  if(charts['chart3']) charts['chart3'].resize();
 }
 
 /* SLIDES 4 & 5 — PROJETADOS vs PRESENÇA (MONTAGENS GRAF linhas 14-17) */
@@ -1026,85 +1032,91 @@ function renderSlide13(mKeys,mLabels){
 }
 
 /* SLIDE 14 — Por Fornecedor (nome na barra) */
-/* SLIDE 14 — Uma barra por FORNECEDOR (último mês do período selecionado) */
+/* SLIDE 14 — Ajudantes por Fornecedor × Mês (barras empilhadas) */
 function renderSlide14(mKeys,mLabels){
   document.getElementById('h14-periodo').textContent=mLabels.join(' → ');
-  // Aggregate across ALL months in period → one bar per supplier
-  const suppTotals={};
+  const suppByMonth={};const allSupps=new Set();
   mKeys.forEach(k=>{
+    suppByMonth[k]={};
     getMaoRecsForKey(k).forEach(r=>{
       const s=r.supplier||'N/D';
-      suppTotals[s]=(suppTotals[s]||0)+1;
+      suppByMonth[k][s]=(suppByMonth[k][s]||0)+1;
+      allSupps.add(s);
     });
   });
-  const supps=Object.keys(suppTotals).sort((a,b)=>suppTotals[b]-suppTotals[a]); // desc
-  const vals=supps.map(s=>suppTotals[s]);
+  // Sort suppliers by total desc
+  const suppTotals={};
+  allSupps.forEach(s=>{suppTotals[s]=mKeys.reduce((t,k)=>t+(suppByMonth[k][s]||0),0);});
+  const supps=[...allSupps].sort((a,b)=>suppTotals[b]-suppTotals[a]);
+  const datasets=supps.map((s,i)=>({
+    label:s,
+    data:mKeys.map(k=>suppByMonth[k][s]||0),
+    backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'cc',
+    borderColor:CHART_COLORS[i%CHART_COLORS.length],
+    borderWidth:1,borderRadius:3
+  }));
   const L=mKeys.length-1;
-  const lastRecs=getMaoRecsForKey(mKeys[L]);
+  const tot=mKeys.reduce((t,k)=>t+getMaoRecsForKey(k).length,0);
   mkKpi('kpi14',[
-    {label:'Total ajudantes (período)',val:vals.reduce((s,v)=>s+v,0)},
-    {label:'Fornecedores ativos',val:supps.length}
+    {label:'Total período',val:tot},
+    {label:'Fornecedores',val:supps.length},
+    {label:'Últ. mês',val:getMaoRecsForKey(mKeys[L]).length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length}
   ]);
-  mkChart('chart14','bar',supps,[{
-    label:'Ajudantes',
-    data:vals,
-    backgroundColor:supps.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]+'cc'),
-    borderColor:supps.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]),
-    borderWidth:2,
-    borderRadius:4
-  }],{
+  mkChart('chart14','bar',mLabels,datasets,{
     scales:{
-      x:{ticks:{color:'#333',font:{size:12,weight:'700'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
-      y:{ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'}}
+      x:{stacked:true,ticks:{color:'#333',font:{size:11,weight:'600'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
+      y:{stacked:true,ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'}}
     },
-    opts:{plugins:{legend:{display:false}}},
     datalabels:{
-      color:'#fff',
-      font:{weight:'bold',size:13},
+      color:'#fff',font:{weight:'bold',size:11},
       anchor:'center',align:'center',
-      textStrokeColor:'rgba(0,0,0,0.35)',textStrokeWidth:3,
-      formatter:(v)=>v>0?v.toLocaleString('pt-BR'):''
+      textStrokeColor:'rgba(0,0,0,0.35)',textStrokeWidth:2,
+      display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0,
+      formatter:(v,ctx)=>v>0?ctx.dataset.label+'\n'+v:''
     }
   });
 }
 
-/* SLIDE 15 — Uma barra por OPERAÇÃO */
+/* SLIDE 15 — Ajudantes por Operação × Mês (barras empilhadas) */
 function renderSlide15(mKeys,mLabels){
   document.getElementById('h15-periodo').textContent=mLabels.join(' → ');
-  const opTotals={};
+  const opByMonth={};const allOps=new Set();
   mKeys.forEach(k=>{
+    opByMonth[k]={};
     getMaoRecsForKey(k).forEach(r=>{
       const o=r.op||'N/D';
-      opTotals[o]=(opTotals[o]||0)+1;
+      opByMonth[k][o]=(opByMonth[k][o]||0)+1;
+      allOps.add(o);
     });
   });
-  const ops=Object.keys(opTotals).sort((a,b)=>opTotals[b]-opTotals[a]);
-  const vals=ops.map(o=>opTotals[o]);
+  const opTotals={};
+  allOps.forEach(o=>{opTotals[o]=mKeys.reduce((t,k)=>t+(opByMonth[k][o]||0),0);});
+  const ops=[...allOps].sort((a,b)=>opTotals[b]-opTotals[a]);
+  const datasets=ops.map((o,i)=>({
+    label:o,
+    data:mKeys.map(k=>opByMonth[k][o]||0),
+    backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'cc',
+    borderColor:CHART_COLORS[i%CHART_COLORS.length],
+    borderWidth:1,borderRadius:3
+  }));
   const L=mKeys.length-1;
-  const lastRecs=getMaoRecsForKey(mKeys[L]);
+  const tot=mKeys.reduce((t,k)=>t+getMaoRecsForKey(k).length,0);
   mkKpi('kpi15',[
-    {label:'Total ajudantes (período)',val:vals.reduce((s,v)=>s+v,0)},
-    {label:'Operações ativas',val:ops.length}
+    {label:'Total período',val:tot},
+    {label:'Operações',val:ops.length},
+    {label:'Últ. mês',val:getMaoRecsForKey(mKeys[L]).length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length}
   ]);
-  mkChart('chart15','bar',ops,[{
-    label:'Ajudantes',
-    data:vals,
-    backgroundColor:ops.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]+'cc'),
-    borderColor:ops.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]),
-    borderWidth:2,
-    borderRadius:4
-  }],{
+  mkChart('chart15','bar',mLabels,datasets,{
     scales:{
-      x:{ticks:{color:'#333',font:{size:12,weight:'700'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
-      y:{ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'}}
+      x:{stacked:true,ticks:{color:'#333',font:{size:11,weight:'600'},maxRotation:45,minRotation:45},grid:{color:'#f0f0f0'}},
+      y:{stacked:true,ticks:{color:'#555',font:{size:11}},grid:{color:'#eeeeee'}}
     },
-    opts:{plugins:{legend:{display:false}}},
     datalabels:{
-      color:'#fff',
-      font:{weight:'bold',size:13},
+      color:'#fff',font:{weight:'bold',size:11},
       anchor:'center',align:'center',
-      textStrokeColor:'rgba(0,0,0,0.35)',textStrokeWidth:3,
-      formatter:(v)=>v>0?v.toLocaleString('pt-BR'):''
+      textStrokeColor:'rgba(0,0,0,0.35)',textStrokeWidth:2,
+      display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0,
+      formatter:(v,ctx)=>v>0?ctx.dataset.label+'\n'+v:''
     }
   });
 }
