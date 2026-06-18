@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PORTOEX — Índices de Expedição</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;height:100vh;width:100vw}
+.slide{display:none;width:100%;height:100vh;flex-direction:column}
+.slide.active{display:flex}
+.header{background:#111;border-bottom:3px solid #F47B20;padding:9px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.header-title{font-size:1.1rem;font-weight:700;color:#F47B20;letter-spacing:1px;text-transform:uppercase}
+.header-meta{margin-left:auto;text-align:right;font-size:.85rem;color:#ccc}
+.header-meta span{color:#F47B20;font-weight:700}
+.slide-body{flex:1;overflow:hidden;padding:12px 20px 52px 20px;display:flex;flex-direction:column;gap:10px}
+.slide-title{font-size:1.1rem;font-weight:700;color:#1B4F9C;text-transform:uppercase;letter-spacing:1px;border-left:4px solid #F47B20;padding-left:10px}
+#nav{position:fixed;bottom:0;left:0;right:0;height:44px;background:#0a0a0a;border-top:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;gap:12px;z-index:100}
+.nav-btn{background:#1B4F9C;color:#fff;border:none;padding:8px 24px;border-radius:16px;cursor:pointer;font-size:.9rem;font-weight:700;transition:.2s}
+.nav-btn:hover{background:#F47B20}
+.nav-dots{display:flex;gap:5px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;background:#333;cursor:pointer;transition:.2s}
+.dot.active{background:#F47B20}
+#toolbar{position:fixed;top:7px;right:10px;display:flex;gap:6px;align-items:center;z-index:200}
+.tb-btn{background:#1B4F9C;border:none;color:#fff;padding:4px 12px;border-radius:10px;cursor:pointer;font-size:.82rem;font-weight:700}
+.tb-btn:hover{background:#F47B20}
+.tb-label{font-size:.82rem;color:#777;white-space:nowrap}
+.period-sel{background:#181818;color:#fff;border:1px solid #F47B20;padding:4px 9px;border-radius:8px;font-size:.82rem;cursor:pointer}
+#settings-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;align-items:center;justify-content:center}
+#settings-modal.open{display:flex}
+.modal-box{background:#111;border:2px solid #1B4F9C;border-radius:12px;padding:24px 30px;min-width:360px}
+.modal-box h2{color:#F47B20;margin-bottom:14px;font-size:1.05rem}
+.modal-box label{display:block;font-size:.85rem;color:#aaa;margin-bottom:3px;margin-top:10px}
+.modal-box input{width:100%;background:#222;border:1px solid #444;color:#fff;padding:6px 9px;border-radius:5px;font-size:.9rem}
+.modal-box input:focus{border-color:#F47B20;outline:none}
+.modal-actions{display:flex;gap:9px;margin-top:16px;justify-content:flex-end}
+.btn-primary{background:#F47B20;color:#fff;border:none;padding:7px 20px;border-radius:6px;cursor:pointer;font-weight:700}
+.btn-secondary{background:#333;color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer}
+#loading{position:fixed;inset:0;background:#000;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#loading.hidden{display:none}
+.spinner{width:44px;height:44px;border:4px solid #333;border-top-color:#F47B20;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{color:#aaa;font-size:.9rem}
+.load-error{color:#f55;font-size:.84rem;max-width:500px;text-align:center;display:none;margin-top:6px;line-height:1.5}
+.chart-wrap{flex:1;position:relative;min-height:0}
+.kpi-row{display:flex;gap:10px;flex-shrink:0}
+.kpi-card{flex:1;background:#0d1117;border:1px solid #1c2128;border-radius:9px;padding:12px 16px}
+.kpi-label{font-size:.78rem;color:#6e7681;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.kpi-val{font-size:1.8rem;font-weight:900;color:#fff;line-height:1}
+.kpi-vs{font-size:.8rem;color:#6e7681;margin-top:4px}
+.kpi-chg{font-size:.8rem;font-weight:700;margin-left:6px}
+.kpi-up{color:#2ea043}.kpi-dn{color:#f85149}
+#slide-1{background:linear-gradient(135deg,#000 55%,#081428 100%)}
+.cover-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding-bottom:44px}
+.cover-main-title{font-size:2.4rem;font-weight:900;color:#F47B20;letter-spacing:3px;text-shadow:0 2px 16px #F47B2055}
+.cover-sub-title{font-size:1.05rem;color:#1B4F9C;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.cover-fields{display:flex;flex-direction:column;gap:10px;margin-top:8px;width:100%;max-width:440px}
+.cover-field{display:flex;align-items:center;background:#111;border:1px solid #1e1e1e;border-radius:8px;overflow:hidden}
+.cover-field-label{background:#1B4F9C;color:#fff;padding:8px 15px;font-size:.85rem;font-weight:700;min-width:140px;text-align:center;text-transform:uppercase}
+.cover-field-value{padding:8px 15px;font-size:1rem;color:#fff;font-weight:600;flex:1;text-align:center}
+.cover-field-value.editable{cursor:pointer}.cover-field-value.editable:hover{color:#F47B20}
+.safety-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding-bottom:44px}
+/* Marquee scrolling text */
+.marquee-wrap{width:100%;overflow:hidden;background:#111;border-top:2px solid #F47B20;border-bottom:2px solid #F47B20;padding:10px 0;margin-bottom:8px}
+.marquee-track{display:inline-block;white-space:nowrap;animation:marquee-scroll 22s linear infinite}
+.marquee-track:hover{animation-play-state:paused}
+@keyframes marquee-scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+.safety-motto{font-size:2.4rem;font-weight:700;color:#fff;text-align:center;letter-spacing:1px}
+/* Closing slide */
+.closing-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;padding-bottom:44px}
+.closing-logo{width:260px;opacity:.95;filter:drop-shadow(0 0 20px #F47B2055)}
+.closing-marquee-wrap{width:100%;overflow:hidden;border-top:2px solid #1B4F9C;border-bottom:2px solid #1B4F9C;padding:12px 0}
+.closing-marquee-track{display:inline-block;white-space:nowrap;font-size:2rem;font-weight:700;color:#F47B20;letter-spacing:2px;animation:marquee-scroll 28s linear infinite}
+.closing-marquee-track:hover{animation-play-state:paused}
+.closing-tag{font-size:1rem;color:#555;letter-spacing:3px;text-transform:uppercase;margin-top:8px}
+.safety-sign{border:6px solid #0a8a0a;border-radius:12px;padding:36px 66px;text-align:center;background:#050f05;box-shadow:0 0 30px #0a8a0a55}
+.safety-sign-top{font-size:1.35rem;color:#0c0;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.safety-days{font-size:6.5rem;font-weight:900;color:#0f0;line-height:1;cursor:pointer}
+.safety-days:hover{color:#5f5}
+.safety-sign-bottom{font-size:1.28rem;color:#0c0;letter-spacing:2px;text-transform:uppercase;margin-top:8px}
+.safety-cta{font-size:1.58rem;color:#aaa;font-style:italic;margin-top:8px}
+.abs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0;overflow:hidden}
+.abs-section{background:#0d0d0d;border:1px solid #1c1c1c;border-radius:8px;padding:10px;overflow:auto}
+.abs-section-title{font-size:.85rem;font-weight:700;color:#F47B20;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;border-bottom:1px solid #1a1a1a;padding-bottom:4px}
+.abs-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.abs-table th{background:#1B4F9C22;color:#7ab;padding:5px 6px;text-align:center;border:1px solid #1c1c1c;font-size:.75rem}
+.abs-table td{padding:4px 5px;text-align:center;border:1px solid #161616;color:#ccc}
+.abs-table td:first-child{text-align:left;color:#eee;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avail-row{display:flex;gap:10px;flex-shrink:0}
+.avail-card{flex:1;background:#0a1422;border:1px solid #1B4F9C44;border-radius:8px;padding:10px 15px;text-align:center}
+.avail-card-title{font-size:.8rem;color:#5a9fd4;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.avail-nums{display:flex;align-items:baseline;gap:7px;justify-content:center}
+.avail-actual{font-size:2.1rem;font-weight:900;color:#F47B20}
+.avail-of{font-size:.9rem;color:#555}
+.avail-total{font-size:1.25rem;font-weight:700;color:#fff}
+.period-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex-shrink:0}
+.stat-card{background:#0d0d0d;border:1px solid #1c1c1c;border-radius:7px;padding:8px 12px;text-align:center}
+.stat-card-val{font-size:1.6rem;font-weight:900;color:#F47B20}
+.stat-card-label{font-size:.75rem;color:#888;text-transform:uppercase;margin-top:3px}
+.legend-wrap{display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0}
+.leg-item{background:#111;border-radius:12px;padding:4px 11px;font-size:.8rem;display:flex;gap:5px;align-items:center}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+.cause-table{width:100%;border-collapse:collapse}
+.cause-table th{background:#1B4F9C;color:#fff;padding:8px 12px;text-align:left;font-size:.8rem;letter-spacing:.5px}
+.cause-table td{padding:7px 11px;border-bottom:1px solid #181818;vertical-align:top;font-size:.84rem}
+.cause-table tr:nth-child(even) td{background:#060606}
+.cause-table tr:hover td{background:#0c1624}
+.cause-table td:first-child{color:#F47B20;font-weight:700;white-space:nowrap}
+.cause-table td:nth-child(2),.cause-table td:nth-child(3){color:#4aadff;white-space:nowrap}
+.cause-table td:last-child{color:#ccc}
+.cause-scroll{flex:1;overflow-y:auto;min-height:0;border:1px solid #1c1c1c;border-radius:8px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#0d0d0d}
+::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
+canvas{width:100%!important}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div><div class="load-text">Carregando dados da planilha...</div><div class="load-error" id="load-err">⚠ Não foi possível carregar a planilha. Execute via INICIAR_APRESENTACAO.bat e verifique se a planilha está pública.</div></div>
+<div id="toolbar">
+  <span class="tb-label">De:</span><select id="sel-start" class="period-sel" onchange="onPeriodChange()"></select>
+  <span class="tb-label">Até:</span><select id="sel-end" class="period-sel" onchange="onPeriodChange()"></select>
+  <button class="tb-btn" onclick="openSettings()">⚙ Config</button>
+</div>
+<div id="settings-modal"><div class="modal-box">
+  <h2>⚙ Configurações</h2>
+  <label>Apresentado por:</label><input id="cfg-apresentado" placeholder="Nome do apresentador">
+  <label>Dias sem acidentes:</label><input id="cfg-acidentes" type="number" min="0" placeholder="0">
+  <div class="modal-actions">
+    <button class="btn-secondary" onclick="closeSettings()">Cancelar</button>
+    <button class="btn-primary" onclick="saveSettings()">Salvar</button>
+  </div>
+</div></div>
+<!-- SLIDE 1 -->
+<div class="slide active" id="slide-1"><div class="cover-center">
+  <div class="cover-main-title">ÍNDICES DE EXPEDIÇÃO</div>
+  <div class="cover-sub-title">MATRIZ</div>
+  <div class="cover-fields">
+    <div class="cover-field"><div class="cover-field-label">Apresentado por</div><div class="cover-field-value editable" id="cov-apresentado" onclick="openSettings()">—</div></div>
+    <div class="cover-field"><div class="cover-field-label">Período</div><div class="cover-field-value" id="cov-periodo">—</div></div>
+  </div>
+</div></div>
+<!-- SLIDE 2 -->
+<div class="slide" id="slide-2">
+  <div class="header"><div class="header-title">🛡 Indicador de Segurança</div><div class="header-meta">Período: <span id="h2-periodo">—</span></div></div>
+  <div class="safety-center">
+    <div class="marquee-wrap">
+      <span class="marquee-track" style="font-size:2.2rem;font-weight:700;color:#fff;letter-spacing:2px">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⚠️&nbsp; O CUIDADO DE UM É A SEGURANÇA DE TODOS &nbsp;&nbsp;&nbsp;⚠️&nbsp; O CUIDADO DE UM É A SEGURANÇA DE TODOS &nbsp;&nbsp;&nbsp;⚠️&nbsp; O CUIDADO DE UM É A SEGURANÇA DE TODOS &nbsp;&nbsp;&nbsp;
+      </span>
+    </div>
+    <div class="safety-sign">
+      <div class="safety-sign-top">Estamos trabalhando há</div>
+      <div class="safety-days" id="seg-days" onclick="openSettings()">0</div>
+      <div class="safety-sign-bottom">DIAS SEM ACIDENTES DE TRABALHO</div>
+    </div>
+    <div class="safety-cta">Colabore para melhorar esse índice</div>
+  </div>
+</div>
+<!-- SLIDE 3 -->
+<div class="slide" id="slide-3">
+  <div class="header"><div class="header-title">📋 Absenteísmo de Colaboradores</div><div class="header-meta">Mês ref: <span id="h3-mes">—</span></div></div>
+  <div class="slide-body">
+    <div class="slide-title">RESUMO — ÚLTIMO MÊS / COMPARATIVO PROJETADOS VS PRESENÇA</div>
+    <div class="avail-row" id="avail-row3"></div>
+    <div id="ger-ativos3" style="display:flex;gap:16px;justify-content:center;flex-shrink:0;margin-bottom:4px"></div>
+    <div class="chart-wrap" style="flex:1.4;min-height:160px"><canvas id="chart3"></canvas></div>
+    <div style="display:flex;gap:10px;flex-shrink:0">
+      <div class="legend-wrap" id="legend3" style="flex:1"></div>
+      <div class="period-stats" id="period-stats3" style="flex:none;grid-template-columns:repeat(4,auto)"></div>
+    </div>
+    <div class="abs-grid" id="abs-grid3" style="flex:1.2"></div>
+  </div>
+</div>
+<!-- SLIDE 4 -->
+<div class="slide" id="slide-4">
+  <div class="header"><div class="header-title">👷 Ajudantes — Projetados vs Presença</div><div class="header-meta">Período: <span id="h4-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">AJUDANTES: PROJETADOS × PRESENÇA MENSAL</div><div class="kpi-row" id="kpi4"></div><div class="chart-wrap"><canvas id="chart4"></canvas></div></div>
+</div>
+<!-- SLIDE 5 -->
+<div class="slide" id="slide-5">
+  <div class="header"><div class="header-title">🔍 Conferentes — Projetados vs Presença</div><div class="header-meta">Período: <span id="h5-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">CONFERENTES: PROJETADOS × PRESENÇA MENSAL</div><div class="kpi-row" id="kpi5"></div><div class="chart-wrap"><canvas id="chart5"></canvas></div></div>
+</div>
+<!-- SLIDE 6 -->
+<div class="slide" id="slide-6">
+  <div class="header"><div class="header-title">📦 JEM — Despachos vs Volumetria</div><div class="header-meta">Período: <span id="h6-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">JEM: DESPACHOS × VOLUMETRIA</div><div class="kpi-row" id="kpi6"></div><div class="chart-wrap"><canvas id="chart6"></canvas></div></div>
+</div>
+<!-- SLIDE 7 -->
+<div class="slide" id="slide-7">
+  <div class="header"><div class="header-title">📝 Coletas + Entregas vs Manifestos</div><div class="header-meta">Período: <span id="h7-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">COLETAS + ENTREGAS × MANIFESTOS</div><div class="kpi-row" id="kpi7"></div><div class="chart-wrap"><canvas id="chart7"></canvas></div></div>
+</div>
+<!-- SLIDE 8 -->
+<div class="slide" id="slide-8">
+  <div class="header"><div class="header-title">🚚 Coletas + Entregas vs Cargas Expressas</div><div class="header-meta">Período: <span id="h8-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">COLETAS + ENTREGAS × CARGAS EXPRESSAS</div><div class="kpi-row" id="kpi8"></div><div class="chart-wrap"><canvas id="chart8"></canvas></div></div>
+</div>
+<!-- SLIDE 9 -->
+<div class="slide" id="slide-9">
+  <div class="header"><div class="header-title">📐 NFs Cubadas vs Volumes Cubados</div><div class="header-meta">Período: <span id="h9-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">NFs CUBADAS × VOLUMES CUBADOS</div><div class="kpi-row" id="kpi9"></div><div class="chart-wrap"><canvas id="chart9"></canvas></div></div>
+</div>
+<!-- SLIDE 10 -->
+<div class="slide" id="slide-10">
+  <div class="header"><div class="header-title">🚌 Veículos Bipados vs Erros de Embarque</div><div class="header-meta">Período: <span id="h10-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">VEÍCULOS BIPADOS × ERROS DE EMBARQUE</div><div class="kpi-row" id="kpi10"></div><div class="chart-wrap"><canvas id="chart10"></canvas></div></div>
+</div>
+<!-- SLIDE 11 -->
+<div class="slide" id="slide-11">
+  <div class="header"><div class="header-title">⏰ Tempo de Saída A+</div><div class="header-meta">Período: <span id="h11-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">SAÍDA A+ — MINUTOS EXCEDIDOS APÓS 23:18 × DIAS EXCEDIDOS</div><div class="kpi-row" id="kpi11"></div><div class="chart-wrap"><canvas id="chart11"></canvas></div></div>
+</div>
+<!-- SLIDE 12 -->
+<div class="slide" id="slide-12">
+  <div class="header"><div class="header-title">⚠ Causa do Atraso</div><div class="header-meta">Mês ref: <span id="h12-mes">—</span></div></div>
+  <div class="slide-body">
+    <div class="slide-title">CAUSA DO ATRASO — ÚLTIMO MÊS DO PERÍODO</div>
+    <div class="cause-scroll"><table class="cause-table"><thead><tr><th>Data</th><th>Final Expresso</th><th>Início Viagem</th><th>Causa do Atraso</th></tr></thead><tbody id="cause-tbody"></tbody></table></div>
+  </div>
+</div>
+<!-- SLIDE 13 -->
+<div class="slide" id="slide-13">
+  <div class="header"><div class="header-title">👥 Mão de Obra — Rota e Expedição</div><div class="header-meta">Período: <span id="h13-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">AJUDANTES POR ROTA E EXPEDIÇÃO</div><div class="kpi-row" id="kpi13"></div><div class="chart-wrap"><canvas id="chart13"></canvas></div></div>
+</div>
+<!-- SLIDE 14 -->
+<div class="slide" id="slide-14">
+  <div class="header"><div class="header-title">👥 Mão de Obra — Por Fornecedor</div><div class="header-meta">Período: <span id="h14-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">AJUDANTES POR FORNECEDOR</div><div class="kpi-row" id="kpi14"></div><div class="chart-wrap"><canvas id="chart14"></canvas></div></div>
+</div>
+<!-- SLIDE 15 -->
+<div class="slide" id="slide-15">
+  <div class="header"><div class="header-title">👥 Mão de Obra — Por Operação</div><div class="header-meta">Período: <span id="h15-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">AJUDANTES POR OPERAÇÃO</div><div class="kpi-row" id="kpi15"></div><div class="chart-wrap"><canvas id="chart15"></canvas></div></div>
+</div>
+<!-- SLIDE 16 -->
+<div class="slide" id="slide-16">
+  <div class="header"><div class="header-title">👥 Mão de Obra — Acumulados</div><div class="header-meta">Período: <span id="h16-periodo">—</span></div></div>
+  <div class="slide-body"><div class="slide-title">ACUMULADO: FORNECEDOR E ROTA/EXPEDIÇÃO</div><div class="abs-grid" id="acc-grid16"></div></div>
+</div>
+<!-- SLIDE 17 — ENCERRAMENTO -->
+<div class="slide" id="slide-17">
+  <div class="header">
+    <div class="header-title">🏁 Encerramento</div>
+    <div class="header-meta" id="h17-periodo"></div>
+  </div>
+  <div class="closing-center">
+    <img id="portoex-logo" class="closing-logo" src="" alt="PORTOEX" style="display:none">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div style="font-size:1.4rem;color:#888;letter-spacing:3px;text-transform:uppercase">Apresentação encerrada</div>
+      <div style="font-size:.9rem;color:#444;letter-spacing:2px">ÍNDICES DE EXPEDIÇÃO — MATRIZ PORTOEX</div>
+    </div>
+    <div class="closing-marquee-wrap">
+      <span class="closing-marquee-track">
+        &nbsp;&nbsp;&nbsp;🙏&nbsp; OBRIGADO A TODOS PELA DEDICAÇÃO E EMPENHO — JUNTOS CONSTRUÍMOS RESULTADOS! &nbsp;&nbsp;&nbsp;&nbsp;
+        🙏&nbsp; OBRIGADO A TODOS PELA DEDICAÇÃO E EMPENHO — JUNTOS CONSTRUÍMOS RESULTADOS! &nbsp;&nbsp;&nbsp;&nbsp;
+        🙏&nbsp; OBRIGADO A TODOS PELA DEDICAÇÃO E EMPENHO — JUNTOS CONSTRUÍMOS RESULTADOS! &nbsp;&nbsp;&nbsp;
+      </span>
+    </div>
+    <div class="closing-tag">PORTOEX — TRANSPORTANDO SOLUÇÕES</div>
+  </div>
+</div>
+<div id="nav">
+  <span id="last-update" style="font-size:.72rem;color:#444;margin-right:8px"></span>
+  <button class="nav-btn" onclick="prevSlide()">◀ Anterior</button>
+  <div class="nav-dots" id="nav-dots"></div>
+  <button class="nav-btn" onclick="nextSlide()">Próxima ▶</button>
+  <button class="nav-btn" onclick="exportSnapshot()" style="background:#1B4F9C;margin-left:16px" title="Gerar arquivo fechado para envio">💾 Exportar</button>
+  <label class="nav-btn" style="background:#333;cursor:pointer;margin-left:4px" title="Carregar logo PORTOEX">🖼 Logo<input type="file" accept="image/*" style="display:none" onchange="handleLogoUpload(event)"></label>
+</div>
+<script>
+/* ===== CONSTANTS ===== */
+const SHEET_ID='1VZKDyY8oAtRHcT0TDvyv5zI1rJeEZe_KAvbbyRbE9qs';
+const ABS_GID='2065103295';
+const MONTH_SHORT=['','JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const MONTH_LONG=['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MONTH_ABR={JAN:1,FEV:2,MAR:3,ABR:4,MAI:5,JUN:6,JUL:7,AGO:8,SET:9,OUT:10,NOV:11,DEZ:12};
+const LEG_COLORS={P:'#2ea043',FA:'#f85149',AT:'#d29922',FE:'#58a6ff',FO:'#bc8cff',H:'#79c0ff',NC:'#8b949e',DV:'#f0883e',LT:'#8d6656'};
+const MAO_ROTA=['THOMPSON','SAMSONITE','S.K.O','ROTA','MANOBRA','BRAFT'];
+const CHART_COLORS=['#1B4F9C','#F47B20','#2ea043','#d29922','#58a6ff','#bc8cff','#f85149','#79c0ff','#8b949e','#f0883e'];
+
+/* ===== DATA STATE ===== */
+let rawOp=null;       // DADOS OP A1:J2000
+let rawAbsV=null;     // ABS VERTICAL A1:AZ2000
+let rawMG=null;       // MONTAGENS GRAF A1:P30 — todas as linhas operacionais
+let rawMao=null;      // DADOS ABS AF1:AQ5000
+let rawGerencial=null;// GERENCIAL A1:P15 — ativos e projetados conf/ajud
+// Linhas específicas MONTAGENS GRAF (acesso direto por índice de linha)
+let rawMGr7=null,rawMGr12=null,rawMGr14=null,rawMGr15=null,rawMGr16=null,rawMGr17=null,rawMGr23=null;
+let periodStart='', periodEnd='';
+let charts={};
+
+/* ===== ABS VERTICAL structure:
+   arr[0] = Row 1: roles per col (CONFERENTE, AJUDANTE...)  col 0,1 empty
+   arr[1] = Row 2: header — col 1 = "DATA", col 2+ = names
+   arr[2+]= data rows: col 0 = dayOfWeek(1-7), col 1 = date, col 2+ = status
+===== */
+let absVRoles=[], absVNames=[], absVConfCols=[], absVAjudCols=[], absVDataStart=2;
+
+function initAbsVStructure(){
+  if(!rawAbsV||rawAbsV.length<2) return;
+  absVRoles=rawAbsV[0]||[];
+  absVNames=rawAbsV[1]||[];
+  absVConfCols=[];absVAjudCols=[];
+  absVRoles.forEach((r,i)=>{
+    const rl=String(r||'').toUpperCase().trim();
+    if(rl==='CONFERENTE') absVConfCols.push(i);
+    else if(rl==='AJUDANTE') absVAjudCols.push(i);
+  });
+  absVDataStart=2;
+  for(let i=2;i<rawAbsV.length;i++){
+    if(parseInt(rawAbsV[i][0])>0){absVDataStart=i;break;}
+  }
+}
+
+/* ===== MONTAGENS GRAF structure:
+   Row 2 of sheet = date labels (OUT/25, NOV/25...) in col B onwards, col A empty
+   Other rows: col A = label, col B+ = monthly values aligned with date row
+===== */
+let mgMonthCols={};  // monthKey → col index in rawMG rows
+
+function montagemLabelToKey(lbl){
+  const m=String(lbl||'').toUpperCase().trim().match(/^([A-Z]{3})\/(\d{2})$/);
+  if(!m) return '';
+  const mo=MONTH_ABR[m[1]];
+  return mo?String(mo).padStart(2,'0')+'/'+(2000+parseInt(m[2])):'';
+}
+
+function initMGStructure(){
+  mgMonthCols={};
+  if(!rawMG) return;
+  // Find date labels row: the first row where col[1] looks like "OUT/25"
+  for(const row of rawMG){
+    if(montagemLabelToKey(String(row[1]||''))!==''){
+      row.forEach((lbl,c)=>{const k=montagemLabelToKey(lbl);if(k) mgMonthCols[k]=c;});
+      break;
+    }
+  }
+}
+
+function findMGRow(keyword){
+  if(!rawMG) return null;
+  const kw=keyword.toUpperCase();
+  for(const row of rawMG){
+    if(String(row[0]||'').toUpperCase().includes(kw)) return row;
+  }
+  return null;
+}
+
+function parseNumber(v){
+  const s=String(v||'').trim();if(!s) return 0;
+  // PT-BR: 1.234,56 → remove thousand-sep dots, replace decimal comma with point
+  if(s.includes(',')) return parseFloat(s.replace(/\./g,'').replace(',','.'))||0;
+  return parseFloat(s)||0;
+}
+function getMGValue(rowLabel,monthKey){
+  const row=findMGRow(rowLabel);
+  if(!row||!(monthKey in mgMonthCols)) return 0;
+  return parseNumber(row[mgMonthCols[monthKey]]);
+}
+
+function getMGDuration(rowLabel,monthKey){
+  // Returns minutes for duration cells (TEMPO SAÍDA A+)
+  const row=findMGRow(rowLabel);
+  if(!row||!(monthKey in mgMonthCols)) return 0;
+  return parseDurationToMinutes(String(row[mgMonthCols[monthKey]]||''));
+}
+
+function parseDurationToMinutes(v){
+  const s=String(v||'').trim();
+  if(!s) return 0;
+  if(/^\d+(\.\d+)?$/.test(s)) return Math.round(parseFloat(s)*1440);
+  const dp=s.match(/^(\d+)\s+days?\s*[,\s]\s*(\d+):(\d+)/i);
+  if(dp) return parseInt(dp[1])*1440+parseInt(dp[2])*60+parseInt(dp[3]);
+  const tp=s.match(/^(\d+):(\d{2})(?::(\d{2}))?/);
+  if(tp) return parseInt(tp[1])*60+parseInt(tp[2]);
+  return 0;
+}
+
+/* ===== GERENCIAL structure:
+   Row 1 of sheet = period labels "1/26","2/26"... (month/yy)
+   Row 6: Projetados Conferentes
+   Row 7: Projetados Ajudantes
+   Row 8: Conferentes Ativos
+   Row 9: Ajudantes Ativos
+   Row 10: Presença Ajudantes
+   Row 11: Presença Conferentes
+===== */
+let gerencialMonthCols={};
+
+function gerencialLabelToKey(lbl){
+  // "1/26" → "01/2026", "2/26" → "02/2026"
+  const m=String(lbl||'').trim().match(/^(\d{1,2})\/(\d{2})$/);
+  if(!m) return '';
+  return String(parseInt(m[1])).padStart(2,'0')+'/'+(2000+parseInt(m[2]));
+}
+
+function initGerencialStructure(){
+  gerencialMonthCols={};
+  if(!rawGerencial) return;
+  for(const row of rawGerencial){
+    // Find header row: first row where some cell looks like "1/26"
+    let found=false;
+    row.forEach((lbl,c)=>{const k=gerencialLabelToKey(lbl);if(k){gerencialMonthCols[k]=c;found=true;}});
+    if(found) break;
+  }
+}
+
+function findGerencialRow(keyword){
+  if(!rawGerencial) return null;
+  const kw=keyword.toUpperCase();
+  for(const row of rawGerencial){
+    if(String(row[0]||'').toUpperCase().includes(kw)) return row;
+  }
+  return null;
+}
+
+function getGerencialValue(rowLabel,monthKey){
+  const row=findGerencialRow(rowLabel);
+  if(!row||!(monthKey in gerencialMonthCols)) return 0;
+  const v=String(row[gerencialMonthCols[monthKey]]||'').replace(',','.');
+  return parseFloat(v)||0;
+}
+
+/* ===== MAO DE OBRA: DADOS ABS AF:AQ
+   Cols: 0=DATA,1=NOME,2=CPF,3=Fornecedor,4=Operação,5=CentroCusto
+===== */
+let maoCols={iDate:0,iNome:1,iSupp:3,iOp:4};
+
+function initMaoStructure(){
+  if(!rawMao||rawMao.length<1) return;
+  rawMao.forEach(row=>{
+    row.forEach((h,j)=>{
+      const hl=String(h||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+      if(hl==='DATA') maoCols.iDate=j;
+      else if(hl==='NOME') maoCols.iNome=j;
+      else if(hl.includes('FORNEC')) maoCols.iSupp=j;
+      else if(hl.includes('OPERA')) maoCols.iOp=j;
+    });
+  });
+}
+
+/* ===== FETCH ===== */
+function gvizUrl(gid,sheet,range){
+  let u=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+  if(gid) u+=`&gid=${gid}`;
+  else if(sheet) u+=`&sheet=${encodeURIComponent(sheet)}`;
+  if(range) u+=`&range=${range}`;
+  return u;
+}
+async function fetchCSV(url){
+  try{const r=await fetch(url);if(!r.ok) throw 0;return parseCSV(await r.text());}
+  catch(e){console.warn('fetchCSV',url,e);return[];}
+}
+function parseCSV(text){
+  const rows=[];
+  for(const line of text.split('\n')){
+    if(!line.trim()) continue;
+    const cells=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(c===','&&!inQ){cells.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    cells.push(cur.trim());rows.push(cells);
+  }
+  return rows;
+}
+
+/* ===== DATE / PERIOD UTILS ===== */
+function inferYear(mm){return parseInt(mm)>=9?2025:2026;}
+function dateToKey(ds){
+  const s=String(ds||'').trim();
+  const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso) return iso[2]+'/'+iso[1];
+  const m=s.match(/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+  if(!m) return '';
+  const mo=m[2].padStart(2,'0');
+  const yr=m[3]?(m[3].length===2?2000+parseInt(m[3]):parseInt(m[3])):inferYear(mo);
+  return mo+'/'+yr;
+}
+function keyToNum(k){const[m,y]=k.split('/');return parseInt(y)*100+parseInt(m);}
+function shortLabel(k){const[mm,yr]=k.split('/');return(MONTH_SHORT[parseInt(mm)]||mm)+'/'+String(yr).slice(2);}
+function longLabel(k){const[mm,yr]=k.split('/');return(MONTH_LONG[parseInt(mm)]||mm)+'/'+yr;}
+function getMonthsInPeriod(){
+  if(!periodStart||!periodEnd) return[];
+  const e=keyToNum(periodEnd);
+  const res=[];
+  let mm=parseInt(periodStart),yr=parseInt(periodStart.split('/')[1]);
+  mm=parseInt(periodStart.split('/')[0]);yr=parseInt(periodStart.split('/')[1]);
+  while(yr*100+mm<=e){
+    const k=String(mm).padStart(2,'0')+'/'+yr;
+    res.push({key:k,label:shortLabel(k)});
+    mm++;if(mm>12){mm=1;yr++;}
+  }
+  return res;
+}
+
+/* ===== ABS VERTICAL helpers ===== */
+function countWeekdaysInMonth(monthKey){
+  if(!rawAbsV||rawAbsV.length<=absVDataStart) return 0;
+  const seen=new Set();
+  for(let i=absVDataStart;i<rawAbsV.length;i++){
+    const dayCode=parseInt(rawAbsV[i][0]);
+    if(dayCode<2||dayCode>6) continue;
+    const ds=String(rawAbsV[i][1]||'').trim();
+    if(ds&&dateToKey(ds)===monthKey) seen.add(ds);
+  }
+  return seen.size;
+}
+function getAbsVDatesInMonth(monthKey){
+  if(!rawAbsV||rawAbsV.length<=absVDataStart) return[];
+  const seen=new Set();
+  for(let i=absVDataStart;i<rawAbsV.length;i++){
+    const ds=String(rawAbsV[i][1]||'').trim();
+    if(ds&&dateToKey(ds)===monthKey) seen.add(ds);
+  }
+  return [...seen].sort();
+}
+function getAbsVPresence(monthKey,roleCols){
+  const employees=roleCols.filter(c=>String(absVNames[c]||'').trim()).length;
+  let present=0;
+  if(rawAbsV){
+    for(let i=absVDataStart;i<rawAbsV.length;i++){
+      if(parseInt(rawAbsV[i][0])<2||parseInt(rawAbsV[i][0])>6) continue;
+      if(dateToKey(String(rawAbsV[i][1]||''))!==monthKey) continue;
+      roleCols.forEach(c=>{if(String(rawAbsV[i][c]||'').toUpperCase()==='P') present++;});
+    }
+  }
+  return{present,employees};
+}
+function getAbsVStatusCounts(monthKey){
+  const counts={};
+  const allCols=[...absVConfCols,...absVAjudCols];
+  if(!rawAbsV) return counts;
+  for(let i=absVDataStart;i<rawAbsV.length;i++){
+    if(dateToKey(String(rawAbsV[i][1]||''))!==monthKey) continue;
+    allCols.forEach(c=>{
+      const s=String(rawAbsV[i][c]||'').trim().toUpperCase();
+      if(s&&s!=='NC') counts[s]=(counts[s]||0)+1;
+    });
+  }
+  return counts;
+}
+
+/* ===== MAO helpers ===== */
+function getMaoRecsForKey(key){
+  if(!rawMao||rawMao.length<1) return[];
+  const{iDate,iNome,iSupp,iOp}=maoCols;
+  return rawMao.filter(r=>{
+    const ds=String(r[iDate]||'').trim();
+    return ds&&!ds.toLowerCase().includes('data')&&dateToKey(ds)===key;
+  }).map(r=>({
+    supplier:String(r[iSupp]||'N/D').trim().toUpperCase(),
+    op:String(r[iOp]||'N/D').trim().toUpperCase(),
+    nome:String(r[iNome]||'').trim()
+  }));
+}
+function maoIsRota(rec){return MAO_ROTA.some(k=>(rec.op||rec.supplier).includes(k));}
+
+/* ===== CHART UTILS ===== */
+function mkChart(id,type,labels,datasets,extra={}){
+  const el=document.getElementById(id);
+  if(!el) return;
+  if(charts[id]){charts[id].destroy();delete charts[id];}
+  charts[id]=new Chart(el.getContext('2d'),{
+    type,data:{labels,datasets},plugins:[ChartDataLabels],
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,position:'bottom',labels:{color:'#ccc',padding:16,font:{size:13},boxWidth:14}},
+        datalabels:{color:'#fff',anchor:'center',align:'center',font:{weight:'bold',size:12},
+          formatter:(v)=>v===0||v===null?'':Number(v).toLocaleString('pt-BR'),
+          ...(extra.datalabels||{})}
+      },
+      scales:{
+        x:{ticks:{color:'#bbb',font:{size:13}},grid:{color:'#1a1a1a'}},
+        y:{ticks:{color:'#bbb',font:{size:12}},grid:{color:'#1a1a1a'}},
+        ...(extra.scales||{})
+      },
+      ...(extra.opts||{})
+    }
+  });
+}
+function mkKpi(id,items){
+  const el=document.getElementById(id);if(!el) return;
+  el.innerHTML=items.map(({label,val,prev,unit})=>{
+    const chg=(prev!==undefined&&prev!==null&&prev!==0)?((val-prev)/prev*100):null;
+    const chgH=chg!==null?`<span class="kpi-chg ${chg>=0?'kpi-up':'kpi-dn'}">${chg>=0?'▲':'▼'}${Math.abs(chg).toFixed(1)}%</span>`:'';
+    return `<div class="kpi-card">
+      <div class="kpi-label">${label}</div>
+      <div class="kpi-val">${typeof val==='number'?val.toLocaleString('pt-BR'):val}${unit?`<span style="font-size:.9rem;font-weight:400;margin-left:4px">${unit}</span>`:''}
+      </div>
+      <div class="kpi-vs">${prev!==undefined?`Mês ant: ${typeof prev==='number'?prev.toLocaleString('pt-BR'):prev}`:''} ${chgH}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ===== RENDER FUNCTIONS ===== */
+
+function renderSlide1(){
+  const cfg=loadCfg();
+  document.getElementById('cov-apresentado').textContent=cfg.apresentado||'—';
+  const m=getMonthsInPeriod();
+  document.getElementById('cov-periodo').textContent=m.length?(longLabel(m[0].key)+' — '+longLabel(m[m.length-1].key)):'—';
+}
+function renderSlide2(){
+  const cfg=loadCfg();
+  document.getElementById('seg-days').textContent=cfg.acidentes??0;
+  const m=getMonthsInPeriod();
+  document.getElementById('h2-periodo').textContent=m.length?(shortLabel(m[0].key)+'→'+shortLabel(m[m.length-1].key)):'—';
+}
+
+/* SLIDE 3 — ABSENTEÍSMO (GERENCIAL para cards/gráfico + ABS VERTICAL para grid) */
+function renderSlide3(){
+  const months=getMonthsInPeriod();if(!months.length) return;
+  const dk=months[months.length-1].key;
+  document.getElementById('h3-mes').textContent=longLabel(dk);
+  const weekdays=countWeekdaysInMonth(dk);
+
+  // Cards: buscar da aba GERENCIAL
+  const confPres=getGerencialValue('PRES',dk)||getGerencialValue('CONFER',dk);
+  const confProj=getGerencialValue('PROJ',dk)||getGerencialValue('PREV',dk)||getMGValue('PROJETADO CONFER',dk);
+  const confAtivos=getGerencialValue('CONF',dk)||absVConfCols.length;
+  const ajudPres=getGerencialValue('AJUD',dk)||getGerencialValue('PRES AJUD',dk);
+  const ajudProj=getGerencialValue('PROJ AJUD',dk)||getMGValue('QTD EVENTOS AJUD',dk);
+  const ajudAtivos=getGerencialValue('AJUD ATIVO',dk)||getGerencialValue('AJUD AT',dk)||absVAjudCols.length;
+
+  // Fallback para conferentes/ajudantes ativos da aba GERENCIAL (linhas 8 e 9)
+  // Busca por correspondência flexível de labels
+  const gerRows=rawGerencial||[];
+  let confAtivosG=0,ajudAtivosG=0,confPresG=0,ajudPresG=0,confProjG=0,ajudProjG=0;
+  // Scan GERENCIAL rows by row index (rows 6-11 in sheet = indices 5-10 in 0-based)
+  // Row 6=ProjConf, 7=ProjAjud, 8=ConfAtivos, 9=AjudAtivos, 10=PresAjud, 11=PresConf
+  // Use row index from rawGerencial (header in row 0)
+  if(rawGerencial&&rawGerencial.length>=11){
+    const mk=dk in gerencialMonthCols?gerencialMonthCols[dk]:null;
+    if(mk!==null){
+      const getV=i=>{const row=rawGerencial[i]||[];return parseFloat(String(row[mk]||'').replace(',','.'))||0;};
+      confProjG=getV(5);ajudProjG=getV(6);confAtivosG=getV(7);
+      ajudAtivosG=getV(8);ajudPresG=getV(9);confPresG=getV(10);
+    }
+  } else {
+    gerRows.forEach(row=>{
+      const lbl=String(row[0]||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+      const mk=dk in gerencialMonthCols?gerencialMonthCols[dk]:null;
+      if(mk===null) return;
+      const val=parseFloat(String(row[mk]||'').replace(',','.'))||0;
+      if(lbl.includes('CONF')&&lbl.includes('ATIV')) confAtivosG=val;
+      else if(lbl.includes('AJUD')&&lbl.includes('ATIV')) ajudAtivosG=val;
+      else if(lbl.includes('PRES')&&lbl.includes('CONF')) confPresG=val;
+      else if(lbl.includes('PRES')&&lbl.includes('AJUD')) ajudPresG=val;
+      else if(lbl.includes('PROJ')&&lbl.includes('CONF')) confProjG=val;
+      else if(lbl.includes('PROJ')&&lbl.includes('AJUD')) ajudProjG=val;
+    });
+  }
+  const confAbsV=getAbsVPresence(dk,absVConfCols);
+  const ajudAbsV=getAbsVPresence(dk,absVAjudCols);
+  const cPres=confPresG||confAbsV.present;
+  const aPres=ajudPresG||ajudAbsV.present;
+  const cProj=confProjG||getMGRowVal(rawMGr17,dk)||(confAbsV.employees*weekdays);
+  const aProj=ajudProjG||getMGRowVal(rawMGr15,dk)||(ajudAbsV.employees*weekdays);
+  const cAtiv=confAtivosG||confAbsV.employees;
+  const aAtiv=ajudAtivosG||ajudAbsV.employees;
+
+  // GERENCIAL ativos display (não em barra)
+  const gerAtivosEl=document.getElementById('ger-ativos3');
+  if(gerAtivosEl){
+    const makeAtivCard=(label,val,color)=>
+      `<div style="background:#0d0d0d;border:2px solid ${color};border-radius:10px;padding:10px 22px;text-align:center;min-width:140px">
+        <div style="font-size:.75rem;color:${color};font-weight:700;letter-spacing:1px;text-transform:uppercase">${label}</div>
+        <div style="font-size:2.2rem;font-weight:900;color:#fff;line-height:1.1">${val||'—'}</div>
+        <div style="font-size:.7rem;color:#666;margin-top:2px">disponíveis no mês</div>
+      </div>`;
+    gerAtivosEl.innerHTML=makeAtivCard('Conferentes Ativos',cAtiv,'#1B4F9C')+makeAtivCard('Ajudantes Ativos',aAtiv,'#F47B20');
+  }
+
+  document.getElementById('avail-row3').innerHTML=`
+    <div class="avail-card"><div class="avail-card-title">Conf. Presença</div>
+      <div class="avail-nums"><span class="avail-actual">${cPres}</span><span class="avail-of">/</span><span class="avail-total">${cProj} proj.</span></div></div>
+    <div class="avail-card"><div class="avail-card-title">Ajud. Presença</div>
+      <div class="avail-nums"><span class="avail-actual">${aPres}</span><span class="avail-of">/</span><span class="avail-total">${aProj} proj.</span></div></div>
+    <div class="avail-card"><div class="avail-card-title">Conf. Ativos</div>
+      <div class="avail-nums"><span class="avail-actual">${cAtiv}</span></div></div>
+    <div class="avail-card"><div class="avail-card-title">Ajud. Ativos</div>
+      <div class="avail-nums"><span class="avail-actual">${aAtiv}</span></div></div>
+    <div class="avail-card"><div class="avail-card-title">Dias Úteis</div>
+      <div class="avail-nums"><span class="avail-actual">${weekdays}</span></div></div>`;
+
+  // Gráfico comparativo: todos os meses do período
+  const allMonths=getMonthsInPeriod();
+  const mKeys=allMonths.map(m=>m.key);
+  const mLabels=allMonths.map(m=>shortLabel(m.key));
+  const projConfArr=[],presConfArr=[],projAjudArr=[],presAjudArr=[];
+  // Gráfico usa MONTAGENS GRAF linhas específicas (mais confiável que keyword lookup)
+  mKeys.forEach(k=>{
+    projConfArr.push(getMGRowVal(rawMGr17,k));
+    presConfArr.push(getMGRowVal(rawMGr16,k));
+    projAjudArr.push(getMGRowVal(rawMGr15,k));
+    presAjudArr.push(getMGRowVal(rawMGr14,k));
+  });
+
+  mkChart('chart3','bar',mLabels,[
+    {label:'Proj. Conf.',data:projConfArr,backgroundColor:'#1B4F9C88',borderColor:'#1B4F9C',borderWidth:2},
+    {label:'Pres. Conf.',data:presConfArr,backgroundColor:'#1B4F9Ccc',borderColor:'#1B4F9C',borderWidth:2,borderDash:[4,4]},
+    {label:'Proj. Ajud.',data:projAjudArr,backgroundColor:'#F47B2088',borderColor:'#F47B20',borderWidth:2},
+    {label:'Pres. Ajud.',data:presAjudArr,backgroundColor:'#F47B20cc',borderColor:'#F47B20',borderWidth:2,borderDash:[4,4]}
+  ]);
+
+  const counts=getAbsVStatusCounts(dk);
+  const legDesc={P:'Presente',FA:'Falta',AT:'Atestado',FE:'Férias',FO:'Folga',H:'Home Office',NC:'N.Contratado',DV:'Demissão Vol.',LT:'Luto'};
+  document.getElementById('legend3').innerHTML=Object.keys(counts).sort().map(k=>`
+    <div class="leg-item"><div class="leg-dot" style="background:${LEG_COLORS[k]||'#555'}"></div>
+    <strong style="font-size:.85rem">${k}</strong><span style="color:#888;font-size:.8rem">${counts[k]}x</span>
+    <span style="font-size:.78rem;color:#666">= ${legDesc[k]||k}</span></div>`).join('');
+
+  const totP=counts['P']||0,totFA=counts['FA']||0,totAT=counts['AT']||0;
+  const totAll=Object.values(counts).reduce((s,v)=>s+v,0);
+  document.getElementById('period-stats3').innerHTML=''; // removido por solicitação
+
+  if(!rawAbsV||rawAbsV.length<=absVDataStart){
+    document.getElementById('abs-grid3').innerHTML='<div style="color:#555;padding:20px;grid-column:1/-1">Sem dados em ABS VERTICAL</div>';return;
+  }
+  const dates=getAbsVDatesInMonth(dk);
+  const dayNums=dates.map(d=>{const m=d.match(/^(\d{1,2})/);return m?m[1]:d;});
+  let gridHtml='';
+  for(const[role,cols] of [['CONFERENTE',absVConfCols],['AJUDANTE',absVAjudCols]]){
+    if(!cols.length) continue;
+    gridHtml+=`<div class="abs-section"><div class="abs-section-title">${role}</div>
+      <table class="abs-table"><thead><tr><th>Nome</th>${dayNums.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody>`;
+    cols.forEach(c=>{
+      const name=String(absVNames[c]||'').trim();if(!name) return;
+      const short=name.split(' ').slice(0,2).join(' ');
+      gridHtml+=`<tr><td title="${name}">${short}</td>`;
+      dates.forEach(dt=>{
+        let st='—';
+        for(let i=absVDataStart;i<rawAbsV.length;i++){
+          if(String(rawAbsV[i][1]||'').trim()===dt){st=String(rawAbsV[i][c]||'').trim().toUpperCase()||'—';break;}
+        }
+        const col=LEG_COLORS[st]||'#555';
+        gridHtml+=`<td style="background:${col}22;color:${col};font-weight:700;font-size:.8rem">${st}</td>`;
+      });
+      gridHtml+='</tr>';
+    });
+    gridHtml+='</tbody></table></div>';
+  }
+  document.getElementById('abs-grid3').innerHTML=gridHtml||'<div style="color:#555;padding:20px;grid-column:1/-1">Sem dados</div>';
+}
+
+/* SLIDES 4 & 5 — PROJETADOS vs PRESENÇA (MONTAGENS GRAF linhas 14-17) */
+function renderSlide4(mKeys,mLabels){
+  document.getElementById('h4-periodo').textContent=mLabels.join(' → ');
+  const proj=[],pres=[];
+  mKeys.forEach(k=>{
+    proj.push(getMGRowVal(rawMGr15,k)); // MONTAGENS GRAF A15:P15
+    pres.push(getMGRowVal(rawMGr14,k)); // MONTAGENS GRAF A14:P14
+  });
+  const L=proj.length-1;
+  mkKpi('kpi4',[
+    {label:'Projetado (últ. mês)',val:proj[L]||0},
+    {label:'Presença (últ. mês)',val:pres[L]||0,prev:pres[L-1]},
+    {label:'Taxa Presença',val:proj[L]?+(pres[L]/proj[L]*100).toFixed(1):0,unit:'%'}
+  ]);
+  mkChart('chart4','bar',mLabels,[
+    {label:'Projetado',data:proj,backgroundColor:'#1B4F9C88',borderColor:'#1B4F9C',borderWidth:2},
+    {label:'Presença Real',data:pres,backgroundColor:'#F47B2099',borderColor:'#F47B20',borderWidth:2}
+  ]);
+}
+function renderSlide5(mKeys,mLabels){
+  document.getElementById('h5-periodo').textContent=mLabels.join(' → ');
+  const proj=[],pres=[];
+  mKeys.forEach(k=>{
+    proj.push(getMGRowVal(rawMGr17,k)); // MONTAGENS GRAF A17:P17
+    pres.push(getMGRowVal(rawMGr16,k)); // MONTAGENS GRAF A16:P16
+  });
+  const L=proj.length-1;
+  mkKpi('kpi5',[
+    {label:'Projetado (últ. mês)',val:proj[L]||0},
+    {label:'Presença (últ. mês)',val:pres[L]||0,prev:pres[L-1]},
+    {label:'Taxa Presença',val:proj[L]?+(pres[L]/proj[L]*100).toFixed(1):0,unit:'%'}
+  ]);
+  mkChart('chart5','bar',mLabels,[
+    {label:'Projetado',data:proj,backgroundColor:'#1B4F9C88',borderColor:'#1B4F9C',borderWidth:2},
+    {label:'Presença Real',data:pres,backgroundColor:'#F47B2099',borderColor:'#F47B20',borderWidth:2}
+  ]);
+}
+
+/* SLIDE 6 — JEM (MONTAGENS GRAF A5:P5 e A6:P6) */
+function renderSlide6(mKeys,mLabels){
+  document.getElementById('h6-periodo').textContent=mLabels.join(' → ');
+  const desp=[],vol=[];
+  mKeys.forEach(k=>{desp.push(getMGValue('DESPACHO',k));vol.push(getMGValue('VOLUMETRIA',k));});
+  const L=desp.length-1;
+  mkKpi('kpi6',[{label:'Despachos (últ. mês)',val:desp[L]||0,prev:desp[L-1]},{label:'Volumetria (últ. mês)',val:vol[L]||0,prev:vol[L-1]}]);
+  mkChart('chart6','bar',mLabels,[
+    {label:'Despachos JEM',data:desp,backgroundColor:'#1B4F9C88',borderColor:'#1B4F9C',borderWidth:2},
+    {label:'Volumetria JEM',data:vol,backgroundColor:'#F47B2099',borderColor:'#F47B20',borderWidth:2}
+  ]);
+}
+
+/* SLIDE 7 — Coletas+Entregas vs Manifestos (A23 e A3) */
+function renderSlide7(mKeys,mLabels){
+  document.getElementById('h7-periodo').textContent=mLabels.join(' → ');
+  const ce=[],man=[];
+  mKeys.forEach(k=>{
+    ce.push(getMGRowVal(rawMGr23,k));        // MONTAGENS GRAF A23:P23
+    man.push(getMGValue('MANIFESTO',k));      // MONTAGENS GRAF A3:P3 (keyword ok)
+  });
+  const L=ce.length-1;
+  mkKpi('kpi7',[{label:'Col+Ent (últ. mês)',val:ce[L]||0,prev:ce[L-1]},{label:'Manifestos',val:man[L]||0,prev:man[L-1]}]);
+  mkChart('chart7','bar',mLabels,[
+    {label:'Coletas + Entregas',data:ce,backgroundColor:'#1B4F9C88',borderColor:'#1B4F9C',borderWidth:2},
+    {label:'Manifestos',data:man,backgroundColor:'#F47B2099',borderColor:'#F47B20',borderWidth:2}
+  ]);
+}
+
+/* SLIDE 8 — Coletas+Entregas vs Cargas Expressas (A23 e A7) */
+function renderSlide8(mKeys,mLabels){
+  document.getElementById('h8-periodo').textContent=mLabels.join(' → ');
+  const ce=[],exp=[];
+  mKeys.forEach(k=>{
+    ce.push(getMGRowVal(rawMGr23,k));   // MONTAGENS GRAF A23:P23
+    exp.push(getMGRowVal(rawMGr7,k));   // MONTAGENS GRAF A7:P7
+  });
+  const L=ce.length-1;
+  mkKpi('kpi8',[{label:'Col+Ent (últ. mês)',val:ce[L]||0,prev:ce[L-1]},{label:'Cargas Expressas',val:exp[L]||0,prev:exp[L-1]}]);
+  mkChart('chart8','bar',mLabels,[
+    {label:'Coletas + Entregas',data:ce,backgroundColor:'#1B4F9C88',borderColor:'#1B4F9C',borderWidth:2},
+    {label:'Cargas Expressas',data:exp,backgroundColor:'#58a6ff88',borderColor:'#58a6ff',borderWidth:2}
+  ]);
+}
+
+/* SLIDE 9 — NFs vs Volumes Cubados (A8 e A9) */
+function renderSlide9(mKeys,mLabels){
+  document.getElementById('h9-periodo').textContent=mLabels.join(' → ');
+  const nf=[],vol=[];
+  mKeys.forEach(k=>{
+    nf.push(getMGValue('NFS CUB',k)||getMGValue('NF',k)||getMGValue('NOTA',k));  // A8:P8
+    vol.push(getMGValue('VOL CUB',k)||getMGValue('QTDS VOL',k)||getMGValue('VOLUME',k)||getMGValue('CUBAD',k)); // A9:P9
+  });
+  const L=nf.length-1;
+  mkKpi('kpi9',[{label:'NFs Cubadas (últ. mês)',val:nf[L]||0,prev:nf[L-1]},{label:'Vol. Cubados (últ. mês)',val:vol[L]||0,prev:vol[L-1]}]);
+  mkChart('chart9','bar',mLabels,[
+    {label:'NFs Cubadas',data:nf,backgroundColor:'#1B4F9C88',borderColor:'#1B4F9C',borderWidth:2},
+    {label:'Volumes Cubados',data:vol,backgroundColor:'#F47B2099',borderColor:'#F47B20',borderWidth:2}
+  ],{datalabels:{formatter:(v)=>v===0?'':Number(v).toLocaleString('pt-BR')}});
+}
+
+/* SLIDE 10 — Veículos Bipados vs Erros (A10 e A11) */
+function renderSlide10(mKeys,mLabels){
+  document.getElementById('h10-periodo').textContent=mLabels.join(' → ');
+  const bip=[],err=[];
+  mKeys.forEach(k=>{bip.push(getMGValue('BIPADO',k)||getMGValue('VEIC',k));err.push(getMGValue('ERRO',k));});
+  const L=bip.length-1;
+  mkKpi('kpi10',[{label:'Bipados (últ. mês)',val:bip[L]||0,prev:bip[L-1]},{label:'Erros (últ. mês)',val:err[L]||0,prev:err[L-1]}]);
+  mkChart('chart10','bar',mLabels,[
+    {label:'Veículos Bipados',data:bip,backgroundColor:'#2ea04388',borderColor:'#2ea043',borderWidth:2},
+    {label:'Erros de Embarque',data:err,backgroundColor:'#f8514988',borderColor:'#f85149',borderWidth:2}
+  ]);
+}
+
+/* SLIDE 11 — TEMPO SAÍDA A+ (A12 = horas excedidas acumuladas, A13 = dias excedidos) */
+function parseCellAsHours(v){
+  // GViz exports Duration-formatted Google Sheets cells as decimal fraction of a day
+  // e.g., 1.5 hours → 0.0625 (= 1.5/24). We convert back to hours.
+  const s=String(v||'').trim();
+  if(!s) return 0;
+  if(/^\d*\.?\d+$/.test(s)){
+    const n=parseFloat(s);
+    // If n < 5: likely day fraction (5 days = 120h is extreme for this metric)
+    // If n >= 5: likely already in hours
+    return n<5?+(n*24).toFixed(4):n;
+  }
+  const dp=s.match(/^(\d+)\s+days?\s*[,\s]\s*(\d+):(\d+)/i);
+  if(dp) return parseInt(dp[1])*24+parseInt(dp[2])+parseInt(dp[3])/60;
+  const tp=s.match(/^(\d+):(\d{2})(?::(\d{2}))?/);
+  if(tp) return parseInt(tp[1])+parseInt(tp[2])/60+(parseInt(tp[3]||0)/3600);
+  return 0;
+}
+function getMGHours(rowLabel,monthKey){
+  const row=findMGRow(rowLabel);
+  if(!row||!(monthKey in mgMonthCols)) return 0;
+  return parseCellAsHours(String(row[mgMonthCols[monthKey]]||''));
+}
+function getMGRowVal(rawRow,monthKey){
+  // Access a single pre-fetched row directly by month column
+  if(!rawRow||!rawRow[0]||!(monthKey in mgMonthCols)) return 0;
+  return parseNumber(rawRow[0][mgMonthCols[monthKey]]);
+}
+function getMGRowHours(rawRow,monthKey){
+  if(!rawRow||!rawRow[0]||!(monthKey in mgMonthCols)) return 0;
+  return parseCellAsHours(String(rawRow[0][mgMonthCols[monthKey]]||''));
+}
+
+function renderSlide11(mKeys,mLabels){
+  document.getElementById('h11-periodo').textContent=mLabels.join(' → ');
+  const hours=[],days=[];
+  mKeys.forEach(k=>{
+    hours.push(getMGRowHours(rawMGr12,k)); // MONTAGENS GRAF A12:P12 (Duration format)
+    days.push(getMGValue('QTD DIAS EXCEDIDO',k)||getMGValue('DIAS EXCEDIDO',k)||getMGValue('EXCEDIDO',k));
+  });
+  const L=hours.length-1;
+  const totalHours=+(hours[L]||0).toFixed(2);
+  const totalMins=Math.round(totalHours*60);
+  mkKpi('kpi11',[
+    {label:'Horas Excedidas após 23:18 (últ. mês)',val:totalHours,unit:'h',prev:hours[L-1]},
+    {label:'Equivalente em minutos',val:totalMins,unit:'min'},
+    {label:'Dias Excedidos (últ. mês)',val:days[L]||0,prev:days[L-1]}
+  ]);
+  mkChart('chart11','bar',mLabels,[
+    {label:'Horas Excedidas após 23:18',data:hours.map(v=>+v.toFixed(2)),backgroundColor:'#f8514988',borderColor:'#f85149',borderWidth:2,yAxisID:'y'},
+    {label:'Dias Excedidos',data:days,backgroundColor:'#d2992299',borderColor:'#d29922',borderWidth:2,type:'line',tension:.3,pointRadius:5,yAxisID:'y1'}
+  ],{
+    scales:{
+      y:{position:'left',ticks:{color:'#bbb',font:{size:12}},grid:{color:'#1a1a1a'},title:{display:true,text:'Horas Excedidas',color:'#888'}},
+      y1:{position:'right',ticks:{color:'#bbb',font:{size:12}},grid:{drawOnChartArea:false},title:{display:true,text:'Dias',color:'#888'}}
+    },
+    datalabels:{formatter:(v,ctx)=>{
+      if(!v) return '';
+      if(ctx.datasetIndex===0){const m=Math.round(v*60);return `${v.toFixed(1)}h\n(${m}min)`;}
+      return v;
+    }}
+  });
+}
+/* SLIDE 12 — CAUSA DO ATRASO (rawOp, último mês) */
+function renderSlide12(){
+  const months=getMonthsInPeriod();if(!months.length) return;
+  const dk=months[months.length-1].key;
+  document.getElementById('h12-mes').textContent=longLabel(dk);
+  if(!rawOp||rawOp.length<2){
+    document.getElementById('cause-tbody').innerHTML='<tr><td colspan="4" style="color:#555;text-align:center;padding:20px">Sem dados</td></tr>';return;
+  }
+  const rows=rawOp.slice(1).filter(r=>{
+    const ds=String(r[0]||'').trim();
+    return ds&&!ds.toLowerCase().includes('data')&&dateToKey(ds)===dk;
+  });
+  if(!rows.length){
+    document.getElementById('cause-tbody').innerHTML=`<tr><td colspan="4" style="color:#555;text-align:center;padding:20px">Sem registros para ${longLabel(dk)}</td></tr>`;return;
+  }
+  document.getElementById('cause-tbody').innerHTML=rows.map(r=>{
+    const dt=String(r[0]||'').trim();
+    const finVal=String(r[7]||r[8]||'—').trim();
+    const iniVal=String(r[8]||r[9]||'—').trim();
+    const causa=String(r[9]||'—').trim()||'—';
+    return `<tr><td>${dt}</td><td>${finVal}</td><td>${iniVal}</td><td>${causa}</td></tr>`;
+  }).join('');
+}
+
+/* SLIDES 13-16 — MÃO DE OBRA */
+function renderSlide13(mKeys,mLabels){
+  document.getElementById('h13-periodo').textContent=mLabels.join(' → ');
+  const rota=[],exp=[];
+  mKeys.forEach(k=>{const recs=getMaoRecsForKey(k);rota.push(recs.filter(maoIsRota).length);exp.push(recs.filter(r=>!maoIsRota(r)).length);});
+  const L=rota.length-1;
+  mkKpi('kpi13',[{label:'Rota (últ. mês)',val:rota[L]||0,prev:rota[L-1]},{label:'Expedição (últ. mês)',val:exp[L]||0,prev:exp[L-1]}]);
+  mkChart('chart13','bar',mLabels,[
+    {label:'Rota',data:rota,backgroundColor:'#1B4F9C88',borderColor:'#1B4F9C',borderWidth:2},
+    {label:'Expedição',data:exp,backgroundColor:'#F47B2099',borderColor:'#F47B20',borderWidth:2}
+  ]);
+}
+
+/* SLIDE 14 — Por Fornecedor (nome na barra) */
+function renderSlide14(mKeys,mLabels){
+  document.getElementById('h14-periodo').textContent=mLabels.join(' → ');
+  const suppByMonth={};const allSupps=new Set();
+  mKeys.forEach(k=>{
+    suppByMonth[k]={};
+    getMaoRecsForKey(k).forEach(r=>{
+      const s=r.supplier||'N/D';suppByMonth[k][s]=(suppByMonth[k][s]||0)+1;allSupps.add(s);
+    });
+  });
+  const supps=[...allSupps].sort();
+  // Single stacked bar per month — each supplier is a segment with its name shown
+  const datasets=supps.map((s,i)=>({
+    label:s,data:mKeys.map(k=>suppByMonth[k][s]||0),
+    backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'bb',
+    borderColor:CHART_COLORS[i%CHART_COLORS.length],borderWidth:1
+  }));
+  const L=mKeys.length-1;
+  const lastRecs=getMaoRecsForKey(mKeys[L]);
+  mkKpi('kpi14',[{label:'Total ajudantes (últ. mês)',val:lastRecs.length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length},{label:'Fornecedores ativos',val:new Set(lastRecs.map(r=>r.supplier)).size}]);
+  mkChart('chart14','bar',mLabels,datasets,{
+    opts:{scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#bbb',font:{size:12}},grid:{color:'#1a1a1a'}}}},
+    datalabels:{
+      formatter:(v,ctx)=>{if(!v||v<1) return '';return ctx.dataset.label+'\n'+v;},
+      color:'#fff',font:{weight:'bold',size:11},anchor:'center',align:'center',
+      display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0
+    }
+  });
+}
+
+/* SLIDE 15 — Por Operação (nome na barra) */
+function renderSlide15(mKeys,mLabels){
+  document.getElementById('h15-periodo').textContent=mLabels.join(' → ');
+  const opByMonth={};const allOps=new Set();
+  mKeys.forEach(k=>{
+    opByMonth[k]={};
+    getMaoRecsForKey(k).forEach(r=>{
+      const o=r.op||'N/D';opByMonth[k][o]=(opByMonth[k][o]||0)+1;allOps.add(o);
+    });
+  });
+  const ops=[...allOps].sort();
+  const datasets=ops.map((o,i)=>({
+    label:o,data:mKeys.map(k=>opByMonth[k][o]||0),
+    backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'bb',
+    borderColor:CHART_COLORS[i%CHART_COLORS.length],borderWidth:1
+  }));
+  const L=mKeys.length-1;
+  const lastRecs=getMaoRecsForKey(mKeys[L]);
+  mkKpi('kpi15',[{label:'Total (últ. mês)',val:lastRecs.length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length},{label:'Operações ativas',val:new Set(lastRecs.map(r=>r.op)).size}]);
+  mkChart('chart15','bar',mLabels,datasets,{
+    opts:{scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#bbb',font:{size:12}},grid:{color:'#1a1a1a'}}}},
+    datalabels:{
+      formatter:(v,ctx)=>{if(!v||v<1) return '';return ctx.dataset.label+'\n'+v;},
+      color:'#fff',font:{weight:'bold',size:11},anchor:'center',align:'center',
+      display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0
+    }
+  });
+}
+
+function renderSlide16(mKeys){
+  document.getElementById('h16-periodo').textContent=mKeys.length?(shortLabel(mKeys[0])+'→'+shortLabel(mKeys[mKeys.length-1])):'—';
+  const allRecs=mKeys.flatMap(k=>getMaoRecsForKey(k));
+  const bySup={};
+  allRecs.forEach(r=>{const s=r.supplier||'N/D';bySup[s]=(bySup[s]||0)+1;});
+  const rotaTotal=allRecs.filter(maoIsRota).length;
+  const expTotal=allRecs.filter(r=>!maoIsRota(r)).length;
+  const total=allRecs.length||1;
+  const sortedSup=Object.entries(bySup).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('acc-grid16').innerHTML=`
+    <div class="abs-section"><div class="abs-section-title">Por Fornecedor (Acumulado)</div>
+      <table class="abs-table"><thead><tr><th>Fornecedor</th><th>Total</th><th>%</th></tr></thead>
+      <tbody>${sortedSup.map(([s,v])=>`<tr><td>${s}</td><td style="color:#F47B20;font-weight:700">${v.toLocaleString('pt-BR')}</td><td style="color:#888">${(v/total*100).toFixed(1)}%</td></tr>`).join('')}</tbody>
+    </table></div>
+    <div class="abs-section"><div class="abs-section-title">Rota vs Expedição (Acumulado)</div>
+      <table class="abs-table"><thead><tr><th>Operação</th><th>Total</th></tr></thead><tbody>
+        <tr><td>🚛 Rota</td><td style="color:#1B4F9C;font-weight:700">${rotaTotal.toLocaleString('pt-BR')}</td></tr>
+        <tr><td>📦 Expedição</td><td style="color:#F47B20;font-weight:700">${expTotal.toLocaleString('pt-BR')}</td></tr>
+        <tr><td><strong>Total</strong></td><td style="color:#fff;font-weight:900">${(rotaTotal+expTotal).toLocaleString('pt-BR')}</td></tr>
+      </tbody></table></div>`;
+}
+
+/* ===== MAIN RENDER ===== */
+function renderAll(){
+  const months=getMonthsInPeriod();if(!months.length) return;
+  const mKeys=months.map(m=>m.key);
+  const mLabels=mKeys.map(shortLabel);
+  renderSlide1();renderSlide2();renderSlide3();
+  renderSlide4(mKeys,mLabels);renderSlide5(mKeys,mLabels);
+  renderSlide6(mKeys,mLabels);renderSlide7(mKeys,mLabels);
+  renderSlide8(mKeys,mLabels);renderSlide9(mKeys,mLabels);
+  renderSlide10(mKeys,mLabels);renderSlide11(mKeys,mLabels);
+  renderSlide12();
+  renderSlide13(mKeys,mLabels);renderSlide14(mKeys,mLabels);
+  renderSlide15(mKeys,mLabels);renderSlide16(mKeys);
+  renderSlide17();
+}
+
+/* ===== PERIOD SELECTOR ===== */
+function buildPeriodOptions(){
+  const keysSet=new Set();
+  if(rawMG&&rawMG.length>0){
+    for(const row of rawMG){
+      row.forEach(lbl=>{const k=montagemLabelToKey(lbl);if(k) keysSet.add(k);});
+      if(keysSet.size>0) break;
+    }
+  }
+  if(rawAbsV){
+    for(let i=absVDataStart;i<rawAbsV.length;i++){
+      const k=dateToKey(String(rawAbsV[i][1]||''));if(k) keysSet.add(k);
+    }
+  }
+  const keys=[...keysSet].filter(k=>k).sort((a,b)=>keyToNum(a)-keyToNum(b));
+  if(!keys.length){console.warn('No period keys found');return;}
+  const opts=keys.map(k=>`<option value="${k}">${longLabel(k)}</option>`).join('');
+  document.getElementById('sel-start').innerHTML=opts;
+  document.getElementById('sel-end').innerHTML=opts;
+  const nowMm=String(new Date().getMonth()+1).padStart(2,'0');
+  const nowKey=nowMm+'/'+new Date().getFullYear();
+  const endDef=keys.includes(nowKey)?nowKey:(keys[keys.length-1]||nowKey);
+  const startDef=keys[Math.max(0,keys.indexOf(endDef)-2)]||endDef;
+  document.getElementById('sel-start').value=startDef;
+  document.getElementById('sel-end').value=endDef;
+  periodStart=startDef;periodEnd=endDef;
+}
+function onPeriodChange(){
+  periodStart=document.getElementById('sel-start').value;
+  periodEnd=document.getElementById('sel-end').value;
+  if(keyToNum(periodStart)>keyToNum(periodEnd)){document.getElementById('sel-end').value=periodStart;periodEnd=periodStart;}
+  renderAll();
+}
+
+/* ===== LOGO LOADER ===== */
+function handleLogoUpload(e){
+  const f=e.target.files[0];if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>loadLogo(ev.target.result);
+  r.readAsDataURL(f);
+}
+function loadLogo(dataUrl){
+  const img=document.getElementById('portoex-logo');
+  if(img&&dataUrl){img.src=dataUrl;img.style.display='block';
+    localStorage.setItem('portoex_logo',dataUrl);}
+}
+(function(){
+  const saved=localStorage.getItem('portoex_logo');
+  if(saved){const img=document.getElementById('portoex-logo');if(img){img.src=saved;img.style.display='block';}}
+})();
+
+/* ===== CLOSING SLIDE 17 ===== */
+function renderSlide17(){
+  const m=getMonthsInPeriod();
+  document.getElementById('h17-periodo').textContent=m.length?(shortLabel(m[0].key)+'→'+shortLabel(m[m.length-1].key)):'—';
+}
+
+/* ===== EXPORT SNAPSHOT ===== */
+async function exportSnapshot(){
+  const btn=document.querySelector('[onclick="exportSnapshot()"]');
+  const orig=btn?btn.textContent:'';
+  if(btn){btn.textContent='⏳ Gerando...';btn.disabled=true;}
+  try{
+    const slides=document.querySelectorAll('.slide');
+    const canvasImages={};
+
+    // Step 1: reveal each hidden slide momentarily, resize charts, capture canvas
+    for(const s of slides){
+      const wasHidden=!s.classList.contains('active');
+      if(wasHidden){
+        s.style.position='fixed';
+        s.style.left='-99999px';
+        s.style.display='flex';
+        s.style.visibility='hidden';
+      }
+      // Force Chart.js to resize into newly-visible canvas
+      s.querySelectorAll('canvas').forEach(cv=>{
+        if(cv.id&&charts[cv.id]){
+          charts[cv.id].resize();
+        }
+      });
+      // Wait one animation frame so Chart.js finishes paint
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      // Capture all canvases in this slide
+      s.querySelectorAll('canvas').forEach(cv=>{
+        try{
+          const chartInst=cv.id&&charts[cv.id];
+          canvasImages[cv.id||Math.random()]=chartInst
+            ?chartInst.toBase64Image('image/png',1)
+            :cv.toDataURL('image/png');
+        }catch(e){console.warn('canvas capture failed',cv.id,e);}
+      });
+      if(wasHidden){
+        s.style.position='';s.style.left='';
+        s.style.display='';s.style.visibility='';
+      }
+    }
+
+    // Step 2: clone each slide and replace canvases with captured images
+    let body='';
+    slides.forEach(s=>{
+      const clone=s.cloneNode(true);
+      const cloneCanvases=clone.querySelectorAll('canvas');
+      s.querySelectorAll('canvas').forEach((cv,i)=>{
+        const imgSrc=canvasImages[cv.id];
+        if(imgSrc&&cloneCanvases[i]){
+          const img=document.createElement('img');
+          img.src=imgSrc;
+          img.style.cssText='width:100%;height:100%;object-fit:contain;display:block';
+          cloneCanvases[i].replaceWith(img);
+        }
+      });
+      body+=clone.outerHTML+'\n';
+    });
+    // Build self-contained HTML
+    const styles=Array.from(document.styleSheets).map(ss=>{
+      try{return Array.from(ss.cssRules).map(r=>r.cssText).join('\n');}catch{return '';}
+    }).join('\n');
+    const html=`<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PORTOEX — Índices de Expedição (Snapshot)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
+${styles}
+</style>
+</head><body>
+<div id="slideshow">
+${body}
+</div>
+<div id="nav" style="position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:12px;background:#080808;border-top:1px solid #111;padding:8px 16px;z-index:100">
+  <button class="nav-btn" onclick="prev()">◀ Anterior</button>
+  <div id="nd" style="display:flex;gap:6px"></div>
+  <button class="nav-btn" onclick="next()">Próxima ▶</button>
+</div>
+<script>
+let cur=1;
+const total=${slides.length};
+function buildDots(){const c=document.getElementById('nd');c.innerHTML='';for(let i=1;i<=total;i++){const d=document.createElement('div');d.style.cssText='width:8px;height:8px;border-radius:50%;cursor:pointer;background:'+(i===1?'#F47B20':'#333');d.onclick=(n=>()=>go(n))(i);c.appendChild(d);}}
+function go(n){document.getElementById('slide-'+cur)?.classList.remove('active');document.getElementById('slide-'+n)?.classList.add('active');cur=n;document.querySelectorAll('#nd div').forEach((d,i)=>d.style.background=i+1===n?'#F47B20':'#333');}
+function next(){if(cur<total)go(cur+1);}
+function prev(){if(cur>1)go(cur-1);}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')next();else if(e.key==='ArrowLeft'||e.key==='ArrowUp')prev();});
+buildDots();
+<\/script>
+</body></html>`;
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    const dt=new Date().toISOString().slice(0,10);
+    a.download=`PORTOEX_Indicadores_${dt}.html`;
+    a.click();
+  }finally{
+    if(btn){btn.textContent=orig;btn.disabled=false;}
+  }
+}
+
+/* ===== NAVIGATION ===== */
+let currentSlide=1;
+const TOTAL_SLIDES=17;
+function buildDots(){
+  const c=document.getElementById('nav-dots');c.innerHTML='';
+  for(let i=1;i<=TOTAL_SLIDES;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i===1?' active':'');d.title='Slide '+i;
+    d.onclick=(n=>()=>goToSlide(n))(i);c.appendChild(d);
+  }
+}
+function goToSlide(n){
+  document.getElementById('slide-'+currentSlide)?.classList.remove('active');
+  document.getElementById('slide-'+n)?.classList.add('active');
+  currentSlide=n;
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i+1===n));
+}
+function nextSlide(){if(currentSlide<TOTAL_SLIDES)goToSlide(currentSlide+1);}
+function prevSlide(){if(currentSlide>1)goToSlide(currentSlide-1);}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') nextSlide();
+  else if(e.key==='ArrowLeft'||e.key==='ArrowUp') prevSlide();
+});
+
+/* ===== SETTINGS ===== */
+function loadCfg(){try{return JSON.parse(localStorage.getItem('portoex_cfg')||'{}');}catch{return{};}}
+function openSettings(){
+  const cfg=loadCfg();
+  document.getElementById('cfg-apresentado').value=cfg.apresentado||'';
+  document.getElementById('cfg-acidentes').value=cfg.acidentes??0;
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function saveSettings(){
+  const cfg=loadCfg();
+  cfg.apresentado=document.getElementById('cfg-apresentado').value.trim();
+  cfg.acidentes=parseInt(document.getElementById('cfg-acidentes').value)||0;
+  localStorage.setItem('portoex_cfg',JSON.stringify(cfg));
+  closeSettings();renderSlide1();renderSlide2();
+}
+
+/* ===== INIT ===== */
+async function loadAll(){
+  const[o,av,mg,mao,ger,r7,r12,r14,r15,r16,r17,r23]=await Promise.all([
+    fetchCSV(gvizUrl(null,'DADOS OP','A1:J2000')),
+    fetchCSV(gvizUrl(null,'ABS VERTICAL','A1:AZ2000')),
+    fetchCSV(gvizUrl(null,'MONTAGENS GRAF','A1:P30')),
+    fetchCSV(gvizUrl(null,'DADOS ABS','AF1:AQ5000')),
+    fetchCSV(gvizUrl(null,'GERENCIAL','A1:P15')),
+    fetchCSV(gvizUrl(null,'MONTAGENS GRAF','A7:P7')),
+    fetchCSV(gvizUrl(null,'MONTAGENS GRAF','A12:P12')),
+    fetchCSV(gvizUrl(null,'MONTAGENS GRAF','A14:P14')),
+    fetchCSV(gvizUrl(null,'MONTAGENS GRAF','A15:P15')),
+    fetchCSV(gvizUrl(null,'MONTAGENS GRAF','A16:P16')),
+    fetchCSV(gvizUrl(null,'MONTAGENS GRAF','A17:P17')),
+    fetchCSV(gvizUrl(null,'MONTAGENS GRAF','A23:P23'))
+  ]);
+  rawOp=o;rawAbsV=av;rawMG=mg;rawMao=mao;rawGerencial=ger;
+  rawMGr7=r7;rawMGr12=r12;rawMGr14=r14;rawMGr15=r15;
+  rawMGr16=r16;rawMGr17=r17;rawMGr23=r23;
+  initAbsVStructure();initMGStructure();initMaoStructure();initGerencialStructure();
+  return (rawMG&&rawMG.length>1)||(rawAbsV&&rawAbsV.length>2);
+}
+let lastUpdateTime=null;
+function updateTimestamp(){
+  lastUpdateTime=new Date();
+  const el=document.getElementById('last-update');
+  if(el) el.textContent='Atualizado: '+lastUpdateTime.toLocaleTimeString('pt-BR');
+}
+
+// Auto-refresh data every 12 hours (without full page reload)
+const AUTO_REFRESH_MS=12*60*60*1000;
+setInterval(async()=>{
+  try{
+    await loadAll();
+    renderAll();
+    updateTimestamp();
+    console.log('Auto-refresh OK',new Date().toLocaleString('pt-BR'));
+  }catch(e){console.error('Auto-refresh failed',e);}
+},AUTO_REFRESH_MS);
+
+async function init(){
+  try{
+    const ok=await loadAll();
+    if(!ok) document.getElementById('load-err').style.display='block';
+    buildPeriodOptions();buildDots();renderAll();
+    updateTimestamp();
+  }catch(e){
+    console.error(e);document.getElementById('load-err').style.display='block';
+  }finally{
+    document.getElementById('loading').classList.add('hidden');
+  }
+}
+init();
+
+</script>
+</body>
+</html>
