@@ -8,47 +8,47 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;height:100vh;width:100vw}
-.slide{display:none;width:100%;height:100vh;flex-direction:column}
+body{background:#ffffff;color:#111111;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;height:100vh;width:100vw}
+.slide{display:none;width:100%;height:100vh;flex-direction:column;background:#ffffff}
 .slide.active{display:flex}
-.header{background:#111;border-bottom:3px solid #F47B20;padding:9px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.header{background:#eeeeee;border-bottom:3px solid #F47B20;padding:9px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0}
 .header-title{font-size:1.1rem;font-weight:700;color:#F47B20;letter-spacing:1px;text-transform:uppercase}
-.header-meta{margin-left:auto;text-align:right;font-size:.85rem;color:#ccc}
+.header-meta{margin-left:auto;text-align:right;font-size:.85rem;color:#555555}
 .header-meta span{color:#F47B20;font-weight:700}
 .slide-body{flex:1;overflow:hidden;padding:12px 20px 52px 20px;display:flex;flex-direction:column;gap:10px}
 .slide-title{font-size:1.1rem;font-weight:700;color:#1B4F9C;text-transform:uppercase;letter-spacing:1px;border-left:4px solid #F47B20;padding-left:10px}
 #nav{position:fixed;bottom:0;left:0;right:0;height:44px;background:#0a0a0a;border-top:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;gap:12px;z-index:100}
-.nav-btn{background:#1B4F9C;color:#fff;border:none;padding:8px 24px;border-radius:16px;cursor:pointer;font-size:.9rem;font-weight:700;transition:.2s}
+.nav-btn{background:#1B4F9C;color:#111111;border:none;padding:8px 24px;border-radius:16px;cursor:pointer;font-size:.9rem;font-weight:700;transition:.2s}
 .nav-btn:hover{background:#F47B20}
 .nav-dots{display:flex;gap:5px;align-items:center}
 .dot{width:7px;height:7px;border-radius:50%;background:#333;cursor:pointer;transition:.2s}
 .dot.active{background:#F47B20}
 #toolbar{position:fixed;top:7px;right:10px;display:flex;gap:6px;align-items:center;z-index:200}
-.tb-btn{background:#1B4F9C;border:none;color:#fff;padding:4px 12px;border-radius:10px;cursor:pointer;font-size:.82rem;font-weight:700}
+.tb-btn{background:#1B4F9C;border:none;color:#111111;padding:4px 12px;border-radius:10px;cursor:pointer;font-size:.82rem;font-weight:700}
 .tb-btn:hover{background:#F47B20}
 .tb-label{font-size:.82rem;color:#777;white-space:nowrap}
-.period-sel{background:#181818;color:#fff;border:1px solid #F47B20;padding:4px 9px;border-radius:8px;font-size:.82rem;cursor:pointer}
+.period-sel{background:#181818;color:#111111;border:1px solid #F47B20;padding:4px 9px;border-radius:8px;font-size:.82rem;cursor:pointer}
 #settings-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;align-items:center;justify-content:center}
 #settings-modal.open{display:flex}
-.modal-box{background:#111;border:2px solid #1B4F9C;border-radius:12px;padding:24px 30px;min-width:360px}
+.modal-box{background:#eeeeee;border:2px solid #1B4F9C;border-radius:12px;padding:24px 30px;min-width:360px}
 .modal-box h2{color:#F47B20;margin-bottom:14px;font-size:1.05rem}
-.modal-box label{display:block;font-size:.85rem;color:#aaa;margin-bottom:3px;margin-top:10px}
-.modal-box input{width:100%;background:#222;border:1px solid #444;color:#fff;padding:6px 9px;border-radius:5px;font-size:.9rem}
+.modal-box label{display:block;font-size:.85rem;color:#666666;margin-bottom:3px;margin-top:10px}
+.modal-box input{width:100%;background:#222;border:1px solid #444;color:#111111;padding:6px 9px;border-radius:5px;font-size:.9rem}
 .modal-box input:focus{border-color:#F47B20;outline:none}
 .modal-actions{display:flex;gap:9px;margin-top:16px;justify-content:flex-end}
-.btn-primary{background:#F47B20;color:#fff;border:none;padding:7px 20px;border-radius:6px;cursor:pointer;font-weight:700}
-.btn-secondary{background:#333;color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer}
-#loading{position:fixed;inset:0;background:#000;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.btn-primary{background:#F47B20;color:#111111;border:none;padding:7px 20px;border-radius:6px;cursor:pointer;font-weight:700}
+.btn-secondary{background:#333;color:#111111;border:none;padding:7px 16px;border-radius:6px;cursor:pointer}
+#loading{position:fixed;inset:0;background:#ffffff;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 #loading.hidden{display:none}
 .spinner{width:44px;height:44px;border:4px solid #333;border-top-color:#F47B20;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.load-text{color:#aaa;font-size:.9rem}
+.load-text{color:#666666;font-size:.9rem}
 .load-error{color:#f55;font-size:.84rem;max-width:500px;text-align:center;display:none;margin-top:6px;line-height:1.5}
 .chart-wrap{flex:1;position:relative;min-height:0}
 .kpi-row{display:flex;gap:10px;flex-shrink:0}
 .kpi-card{flex:1;background:#0d1117;border:1px solid #1c2128;border-radius:9px;padding:12px 16px}
 .kpi-label{font-size:.78rem;color:#6e7681;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
-.kpi-val{font-size:1.8rem;font-weight:900;color:#fff;line-height:1}
+.kpi-val{font-size:1.8rem;font-weight:900;color:#111111;line-height:1}
 .kpi-vs{font-size:.8rem;color:#6e7681;margin-top:4px}
 .kpi-chg{font-size:.8rem;font-weight:700;margin-left:6px}
 .kpi-up{color:#2ea043}.kpi-dn{color:#f85149}
@@ -57,17 +57,22 @@ body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;overflow
 .cover-main-title{font-size:2.4rem;font-weight:900;color:#F47B20;letter-spacing:3px;text-shadow:0 2px 16px #F47B2055}
 .cover-sub-title{font-size:1.05rem;color:#1B4F9C;font-weight:700;letter-spacing:2px;text-transform:uppercase}
 .cover-fields{display:flex;flex-direction:column;gap:10px;margin-top:8px;width:100%;max-width:440px}
-.cover-field{display:flex;align-items:center;background:#111;border:1px solid #1e1e1e;border-radius:8px;overflow:hidden}
-.cover-field-label{background:#1B4F9C;color:#fff;padding:8px 15px;font-size:.85rem;font-weight:700;min-width:140px;text-align:center;text-transform:uppercase}
-.cover-field-value{padding:8px 15px;font-size:1rem;color:#fff;font-weight:600;flex:1;text-align:center}
+.cover-field{display:flex;align-items:center;background:#eeeeee;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden}
+.cover-field-label{background:#1B4F9C;color:#111111;padding:8px 15px;font-size:.85rem;font-weight:700;min-width:140px;text-align:center;text-transform:uppercase}
+.cover-field-value{padding:8px 15px;font-size:1rem;color:#111111;font-weight:600;flex:1;text-align:center}
 .cover-field-value.editable{cursor:pointer}.cover-field-value.editable:hover{color:#F47B20}
+.quick-access{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;max-width:680px}
+.qa-btn{display:flex;flex-direction:column;align-items:center;gap:4px;background:#f8f8f8;border:2px solid #1B4F9C22;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .2s;min-width:80px;text-decoration:none;color:#111111}
+.qa-btn:hover{background:#1B4F9C;border-color:#1B4F9C;color:#fff;transform:translateY(-2px);box-shadow:0 4px 12px #1B4F9C44}
+.qa-icon{font-size:1.6rem;line-height:1}
+.qa-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:center;color:inherit}
 .safety-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding-bottom:44px}
 /* Marquee scrolling text */
-.marquee-wrap{width:100%;overflow:hidden;background:#111;border-top:2px solid #F47B20;border-bottom:2px solid #F47B20;padding:10px 0;margin-bottom:8px}
+.marquee-wrap{width:100%;overflow:hidden;background:#eeeeee;border-top:2px solid #F47B20;border-bottom:2px solid #F47B20;padding:10px 0;margin-bottom:8px}
 .marquee-track{display:inline-block;white-space:nowrap;animation:marquee-scroll 22s linear infinite}
 .marquee-track:hover{animation-play-state:paused}
 @keyframes marquee-scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
-.safety-motto{font-size:2.4rem;font-weight:700;color:#fff;text-align:center;letter-spacing:1px}
+.safety-motto{font-size:2.4rem;font-weight:700;color:#111111;text-align:center;letter-spacing:1px}
 /* Closing slide */
 .closing-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;padding-bottom:44px}
 .closing-logo{width:260px;opacity:.95;filter:drop-shadow(0 0 20px #F47B2055)}
@@ -75,44 +80,44 @@ body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;overflow
 .closing-marquee-track{display:inline-block;white-space:nowrap;font-size:2rem;font-weight:700;color:#F47B20;letter-spacing:2px;animation:marquee-scroll 28s linear infinite}
 .closing-marquee-track:hover{animation-play-state:paused}
 .closing-tag{font-size:1rem;color:#555;letter-spacing:3px;text-transform:uppercase;margin-top:8px}
-.safety-sign{border:6px solid #0a8a0a;border-radius:12px;padding:36px 66px;text-align:center;background:#050f05;box-shadow:0 0 30px #0a8a0a55}
+.safety-sign{border:6px solid #0a8a0a;border-radius:12px;padding:36px 66px;text-align:center;background:#f0faf0;box-shadow:0 0 30px #0a8a0a44}
 .safety-sign-top{font-size:1.35rem;color:#0c0;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
 .safety-days{font-size:6.5rem;font-weight:900;color:#0f0;line-height:1;cursor:pointer}
 .safety-days:hover{color:#5f5}
 .safety-sign-bottom{font-size:1.28rem;color:#0c0;letter-spacing:2px;text-transform:uppercase;margin-top:8px}
-.safety-cta{font-size:1.58rem;color:#aaa;font-style:italic;margin-top:8px}
+.safety-cta{font-size:1.58rem;color:#666666;font-style:italic;margin-top:8px}
 .abs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0;overflow:hidden}
-.abs-section{background:#0d0d0d;border:1px solid #1c1c1c;border-radius:8px;padding:10px;overflow:auto}
-.abs-section-title{font-size:.85rem;font-weight:700;color:#F47B20;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;border-bottom:1px solid #1a1a1a;padding-bottom:4px}
+.abs-section{background:#f8f8f8;border:1px solid #dddddd;border-radius:8px;padding:10px;overflow:auto}
+.abs-section-title{font-size:.85rem;font-weight:700;color:#F47B20;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;border-bottom:1px solid #e0e0e0;padding-bottom:4px}
 .abs-table{width:100%;border-collapse:collapse;font-size:.78rem}
-.abs-table th{background:#1B4F9C22;color:#7ab;padding:5px 6px;text-align:center;border:1px solid #1c1c1c;font-size:.75rem}
-.abs-table td{padding:4px 5px;text-align:center;border:1px solid #161616;color:#ccc}
-.abs-table td:first-child{text-align:left;color:#eee;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.abs-table th{background:#1B4F9C22;color:#7ab;padding:5px 6px;text-align:center;border:1px solid #dddddd;font-size:.75rem}
+.abs-table td{padding:4px 5px;text-align:center;border:1px solid #161616;color:#555555}
+.abs-table td:first-child{text-align:left;color:#222222;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .avail-row{display:flex;gap:10px;flex-shrink:0}
 .avail-card{flex:1;background:#0a1422;border:1px solid #1B4F9C44;border-radius:8px;padding:10px 15px;text-align:center}
 .avail-card-title{font-size:.8rem;color:#5a9fd4;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
 .avail-nums{display:flex;align-items:baseline;gap:7px;justify-content:center}
 .avail-actual{font-size:2.1rem;font-weight:900;color:#F47B20}
 .avail-of{font-size:.9rem;color:#555}
-.avail-total{font-size:1.25rem;font-weight:700;color:#fff}
+.avail-total{font-size:1.25rem;font-weight:700;color:#111111}
 .period-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex-shrink:0}
-.stat-card{background:#0d0d0d;border:1px solid #1c1c1c;border-radius:7px;padding:8px 12px;text-align:center}
+.stat-card{background:#f8f8f8;border:1px solid #dddddd;border-radius:7px;padding:8px 12px;text-align:center}
 .stat-card-val{font-size:1.6rem;font-weight:900;color:#F47B20}
 .stat-card-label{font-size:.75rem;color:#888;text-transform:uppercase;margin-top:3px}
 .legend-wrap{display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0}
-.leg-item{background:#111;border-radius:12px;padding:4px 11px;font-size:.8rem;display:flex;gap:5px;align-items:center}
+.leg-item{background:#eeeeee;border-radius:12px;padding:4px 11px;font-size:.8rem;display:flex;gap:5px;align-items:center}
 .leg-dot{width:8px;height:8px;border-radius:50%}
 .cause-table{width:100%;border-collapse:collapse}
-.cause-table th{background:#1B4F9C;color:#fff;padding:8px 12px;text-align:left;font-size:.8rem;letter-spacing:.5px}
+.cause-table th{background:#1B4F9C;color:#111111;padding:8px 12px;text-align:left;font-size:.8rem;letter-spacing:.5px}
 .cause-table td{padding:7px 11px;border-bottom:1px solid #181818;vertical-align:top;font-size:.84rem}
 .cause-table tr:nth-child(even) td{background:#060606}
 .cause-table tr:hover td{background:#0c1624}
 .cause-table td:first-child{color:#F47B20;font-weight:700;white-space:nowrap}
 .cause-table td:nth-child(2),.cause-table td:nth-child(3){color:#4aadff;white-space:nowrap}
-.cause-table td:last-child{color:#ccc}
-.cause-scroll{flex:1;overflow-y:auto;min-height:0;border:1px solid #1c1c1c;border-radius:8px}
+.cause-table td:last-child{color:#555555}
+.cause-scroll{flex:1;overflow-y:auto;min-height:0;border:1px solid #dddddd;border-radius:8px}
 ::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:#0d0d0d}
+::-webkit-scrollbar-track{background:#f8f8f8}
 ::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
 canvas{width:100%!important}
 </style>
@@ -140,6 +145,21 @@ canvas{width:100%!important}
   <div class="cover-fields">
     <div class="cover-field"><div class="cover-field-label">Apresentado por</div><div class="cover-field-value editable" id="cov-apresentado" onclick="openSettings()">—</div></div>
     <div class="cover-field"><div class="cover-field-label">Período</div><div class="cover-field-value" id="cov-periodo">—</div></div>
+    <div class="quick-access">
+      <a class="qa-btn" onclick="goToSlide(2)"><span class="qa-icon">🛡</span><span class="qa-label">Segurança</span></a>
+      <a class="qa-btn" onclick="goToSlide(3)"><span class="qa-icon">📋</span><span class="qa-label">Resumo Absenteísmo</span></a>
+      <a class="qa-btn" onclick="goToSlide(4)"><span class="qa-icon">👷</span><span class="qa-label">Ajudantes Proj×Pres</span></a>
+      <a class="qa-btn" onclick="goToSlide(5)"><span class="qa-icon">👔</span><span class="qa-label">Conferentes Proj×Pres</span></a>
+      <a class="qa-btn" onclick="goToSlide(6)"><span class="qa-icon">📦</span><span class="qa-label">JEM Despachos</span></a>
+      <a class="qa-btn" onclick="goToSlide(7)"><span class="qa-icon">🚚</span><span class="qa-label">Coletas×Manifestos</span></a>
+      <a class="qa-btn" onclick="goToSlide(8)"><span class="qa-icon">⚡</span><span class="qa-label">Cargas Expressas</span></a>
+      <a class="qa-btn" onclick="goToSlide(9)"><span class="qa-icon">📐</span><span class="qa-label">NFs Cubadas</span></a>
+      <a class="qa-btn" onclick="goToSlide(10)"><span class="qa-icon">🔍</span><span class="qa-label">Bipados×Erros</span></a>
+      <a class="qa-btn" onclick="goToSlide(11)"><span class="qa-icon">⏰</span><span class="qa-label">Saída A+</span></a>
+      <a class="qa-btn" onclick="goToSlide(12)"><span class="qa-icon">📊</span><span class="qa-label">Causa Atraso</span></a>
+      <a class="qa-btn" onclick="goToSlide(13)"><span class="qa-icon">🏗</span><span class="qa-label">Mão de Obra</span></a>
+      <a class="qa-btn" onclick="goToSlide(17)"><span class="qa-icon">🏁</span><span class="qa-label">Encerramento</span></a>
+    </div>
   </div>
 </div></div>
 <!-- SLIDE 2 -->
@@ -147,7 +167,7 @@ canvas{width:100%!important}
   <div class="header"><div class="header-title">🛡 Indicador de Segurança</div><div class="header-meta">Período: <span id="h2-periodo">—</span></div></div>
   <div class="safety-center">
     <div class="marquee-wrap">
-      <span class="marquee-track" style="font-size:2.2rem;font-weight:700;color:#fff;letter-spacing:2px">
+      <span class="marquee-track" style="font-size:2.2rem;font-weight:700;color:#111111;letter-spacing:2px">
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⚠️&nbsp; O CUIDADO DE UM É A SEGURANÇA DE TODOS &nbsp;&nbsp;&nbsp;⚠️&nbsp; O CUIDADO DE UM É A SEGURANÇA DE TODOS &nbsp;&nbsp;&nbsp;⚠️&nbsp; O CUIDADO DE UM É A SEGURANÇA DE TODOS &nbsp;&nbsp;&nbsp;
       </span>
     </div>
@@ -249,7 +269,19 @@ canvas{width:100%!important}
     <div class="header-meta" id="h17-periodo"></div>
   </div>
   <div class="closing-center">
-    <img id="portoex-logo" class="closing-logo" src="" alt="PORTOEX" style="display:none">
+    <div class="closing-logo" style="display:flex;align-items:center;justify-content:center;padding:10px 20px;background:#fff;border-radius:12px;box-shadow:0 2px 16px #1B4F9C22">
+      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 110' width='300' height='105'>
+  <!-- Orange arrow/check shape -->
+  <polygon points='10,55 52,10 74,10 42,50 74,100 52,100' fill='#F47B20'/>
+  <polygon points='38,55 80,10 102,10 70,50 102,100 80,100' fill='#1B4F9C' opacity='0.85'/>
+  <!-- PORTOEX text -->
+  <text x='115' y='52' font-family='Arial Black,Arial' font-weight='900' font-size='38' fill='#1B4F9C' letter-spacing='1'>PORTOEX</text>
+  <!-- Subtitle -->
+  <text x='116' y='72' font-family='Arial,sans-serif' font-weight='400' font-size='12' fill='#555' letter-spacing='2'>TRANSPORTANDO SOLUÇÕES</text>
+  <!-- Decorative line -->
+  <line x1='115' y1='58' x2='308' y2='58' stroke='#F47B20' stroke-width='2'/>
+</svg>
+    </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
       <div style="font-size:1.4rem;color:#888;letter-spacing:3px;text-transform:uppercase">Apresentação encerrada</div>
       <div style="font-size:.9rem;color:#444;letter-spacing:2px">ÍNDICES DE EXPEDIÇÃO — MATRIZ PORTOEX</div>
@@ -265,12 +297,11 @@ canvas{width:100%!important}
   </div>
 </div>
 <div id="nav">
-  <span id="last-update" style="font-size:.72rem;color:#444;margin-right:8px"></span>
+  <span id="last-update" style="font-size:.72rem;color:#999;margin-right:8px"></span>
   <button class="nav-btn" onclick="prevSlide()">◀ Anterior</button>
   <div class="nav-dots" id="nav-dots"></div>
   <button class="nav-btn" onclick="nextSlide()">Próxima ▶</button>
   <button class="nav-btn" onclick="exportSnapshot()" style="background:#1B4F9C;margin-left:16px" title="Gerar arquivo fechado para envio">💾 Exportar</button>
-  <label class="nav-btn" style="background:#333;cursor:pointer;margin-left:4px" title="Carregar logo PORTOEX">🖼 Logo<input type="file" accept="image/*" style="display:none" onchange="handleLogoUpload(event)"></label>
 </div>
 <script>
 /* ===== CONSTANTS ===== */
@@ -574,13 +605,13 @@ function mkChart(id,type,labels,datasets,extra={}){
       responsive:true,maintainAspectRatio:false,
       plugins:{
         legend:{display:true,position:'bottom',labels:{color:'#ccc',padding:16,font:{size:13},boxWidth:14}},
-        datalabels:{color:'#fff',anchor:'center',align:'center',font:{weight:'bold',size:12},
+        datalabels:{color:'#111',anchor:'center',align:'center',font:{weight:'bold',size:12},
           formatter:(v)=>v===0||v===null?'':Number(v).toLocaleString('pt-BR'),
           ...(extra.datalabels||{})}
       },
       scales:{
-        x:{ticks:{color:'#bbb',font:{size:13}},grid:{color:'#1a1a1a'}},
-        y:{ticks:{color:'#bbb',font:{size:12}},grid:{color:'#1a1a1a'}},
+        x:{ticks:{color:'#444',font:{size:13}},grid:{color:'#e0e0e0'}},
+        y:{ticks:{color:'#444',font:{size:12}},grid:{color:'#e0e0e0'}},
         ...(extra.scales||{})
       },
       ...(extra.opts||{})
@@ -672,9 +703,9 @@ function renderSlide3(){
   const gerAtivosEl=document.getElementById('ger-ativos3');
   if(gerAtivosEl){
     const makeAtivCard=(label,val,color)=>
-      `<div style="background:#0d0d0d;border:2px solid ${color};border-radius:10px;padding:10px 22px;text-align:center;min-width:140px">
+      `<div style="background:#f8f8f8;border:2px solid ${color};border-radius:10px;padding:10px 22px;text-align:center;min-width:140px">
         <div style="font-size:.75rem;color:${color};font-weight:700;letter-spacing:1px;text-transform:uppercase">${label}</div>
-        <div style="font-size:2.2rem;font-weight:900;color:#fff;line-height:1.1">${val||'—'}</div>
+        <div style="font-size:2.2rem;font-weight:900;color:#111111;line-height:1.1">${val||'—'}</div>
         <div style="font-size:.7rem;color:#666;margin-top:2px">disponíveis no mês</div>
       </div>`;
     gerAtivosEl.innerHTML=makeAtivCard('Conferentes Ativos',cAtiv,'#1B4F9C')+makeAtivCard('Ajudantes Ativos',aAtiv,'#F47B20');
@@ -743,7 +774,7 @@ function renderSlide3(){
           if(String(rawAbsV[i][1]||'').trim()===dt){st=String(rawAbsV[i][c]||'').trim().toUpperCase()||'—';break;}
         }
         const col=LEG_COLORS[st]||'#555';
-        gridHtml+=`<td style="background:${col}22;color:${col};font-weight:700;font-size:.8rem">${st}</td>`;
+        gridHtml+=`<td style="background:${col}33;color:${col};font-weight:700;font-size:.8rem">${st}</td>`;
       });
       gridHtml+='</tr>';
     });
@@ -917,8 +948,8 @@ function renderSlide11(mKeys,mLabels){
     {label:'Dias Excedidos',data:days,backgroundColor:'#d2992299',borderColor:'#d29922',borderWidth:2,type:'line',tension:.3,pointRadius:5,yAxisID:'y1'}
   ],{
     scales:{
-      y:{position:'left',ticks:{color:'#bbb',font:{size:12}},grid:{color:'#1a1a1a'},title:{display:true,text:'Horas Excedidas',color:'#888'}},
-      y1:{position:'right',ticks:{color:'#bbb',font:{size:12}},grid:{drawOnChartArea:false},title:{display:true,text:'Dias',color:'#888'}}
+      y:{position:'left',ticks:{color:'#444',font:{size:12}},grid:{color:'#e0e0e0'},title:{display:true,text:'Horas Excedidas',color:'#777'}},
+      y1:{position:'right',ticks:{color:'#444',font:{size:12}},grid:{drawOnChartArea:false},title:{display:true,text:'Dias',color:'#777'}}
     },
     datalabels:{formatter:(v,ctx)=>{
       if(!v) return '';
@@ -985,10 +1016,10 @@ function renderSlide14(mKeys,mLabels){
   const lastRecs=getMaoRecsForKey(mKeys[L]);
   mkKpi('kpi14',[{label:'Total ajudantes (últ. mês)',val:lastRecs.length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length},{label:'Fornecedores ativos',val:new Set(lastRecs.map(r=>r.supplier)).size}]);
   mkChart('chart14','bar',mLabels,datasets,{
-    opts:{scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#bbb',font:{size:12}},grid:{color:'#1a1a1a'}}}},
+    opts:{scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#444',font:{size:12}},grid:{color:'#e0e0e0'}}}},
     datalabels:{
       formatter:(v,ctx)=>{if(!v||v<1) return '';return ctx.dataset.label+'\n'+v;},
-      color:'#fff',font:{weight:'bold',size:11},anchor:'center',align:'center',
+      color:'#111',font:{weight:'bold',size:11},anchor:'center',align:'center',
       display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0
     }
   });
@@ -1014,10 +1045,10 @@ function renderSlide15(mKeys,mLabels){
   const lastRecs=getMaoRecsForKey(mKeys[L]);
   mkKpi('kpi15',[{label:'Total (últ. mês)',val:lastRecs.length,prev:getMaoRecsForKey(mKeys[Math.max(0,L-1)]).length},{label:'Operações ativas',val:new Set(lastRecs.map(r=>r.op)).size}]);
   mkChart('chart15','bar',mLabels,datasets,{
-    opts:{scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#bbb',font:{size:12}},grid:{color:'#1a1a1a'}}}},
+    opts:{scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#444',font:{size:12}},grid:{color:'#e0e0e0'}}}},
     datalabels:{
       formatter:(v,ctx)=>{if(!v||v<1) return '';return ctx.dataset.label+'\n'+v;},
-      color:'#fff',font:{weight:'bold',size:11},anchor:'center',align:'center',
+      color:'#111',font:{weight:'bold',size:11},anchor:'center',align:'center',
       display:(ctx)=>ctx.dataset.data[ctx.dataIndex]>0
     }
   });
@@ -1041,7 +1072,7 @@ function renderSlide16(mKeys){
       <table class="abs-table"><thead><tr><th>Operação</th><th>Total</th></tr></thead><tbody>
         <tr><td>🚛 Rota</td><td style="color:#1B4F9C;font-weight:700">${rotaTotal.toLocaleString('pt-BR')}</td></tr>
         <tr><td>📦 Expedição</td><td style="color:#F47B20;font-weight:700">${expTotal.toLocaleString('pt-BR')}</td></tr>
-        <tr><td><strong>Total</strong></td><td style="color:#fff;font-weight:900">${(rotaTotal+expTotal).toLocaleString('pt-BR')}</td></tr>
+        <tr><td><strong>Total</strong></td><td style="color:#111111;font-weight:900">${(rotaTotal+expTotal).toLocaleString('pt-BR')}</td></tr>
       </tbody></table></div>`;
 }
 
@@ -1096,21 +1127,7 @@ function onPeriodChange(){
 }
 
 /* ===== LOGO LOADER ===== */
-function handleLogoUpload(e){
-  const f=e.target.files[0];if(!f) return;
-  const r=new FileReader();
-  r.onload=ev=>loadLogo(ev.target.result);
-  r.readAsDataURL(f);
-}
-function loadLogo(dataUrl){
-  const img=document.getElementById('portoex-logo');
-  if(img&&dataUrl){img.src=dataUrl;img.style.display='block';
-    localStorage.setItem('portoex_logo',dataUrl);}
-}
-(function(){
-  const saved=localStorage.getItem('portoex_logo');
-  if(saved){const img=document.getElementById('portoex-logo');if(img){img.src=saved;img.style.display='block';}}
-})();
+/* logo embedded as SVG */
 
 /* ===== CLOSING SLIDE 17 ===== */
 function renderSlide17(){
@@ -1120,6 +1137,8 @@ function renderSlide17(){
 
 /* ===== EXPORT SNAPSHOT ===== */
 async function exportSnapshot(){
+  const pwd=prompt('🔒 Senha para exportar:');
+  if(pwd!=='ADMIN@2024'){alert('Senha incorreta.');return;}
   const btn=document.querySelector('[onclick="exportSnapshot()"]');
   const orig=btn?btn.textContent:'';
   if(btn){btn.textContent='⏳ Gerando...';btn.disabled=true;}
@@ -1185,14 +1204,14 @@ async function exportSnapshot(){
 <title>PORTOEX — Índices de Expedição (Snapshot)</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
+html,body{width:100%;height:100%;background:#ffffff;color:#111111;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
 ${styles}
 </style>
 </head><body>
 <div id="slideshow">
 ${body}
 </div>
-<div id="nav" style="position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:12px;background:#080808;border-top:1px solid #111;padding:8px 16px;z-index:100">
+<div id="nav" style="position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:12px;background:#f5f5f5;border-top:1px solid #ddd;padding:8px 16px;z-index:100">
   <button class="nav-btn" onclick="prev()">◀ Anterior</button>
   <div id="nd" style="display:flex;gap:6px"></div>
   <button class="nav-btn" onclick="next()">Próxima ▶</button>
